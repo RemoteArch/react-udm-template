@@ -78,6 +78,7 @@ const ErrorComponent = ({handleRetry , error})=>{
 
 
 
+
 const RenderComponent = ({ jsx , globalName , props = {} , children }) => {
   
   if(!jsx){
@@ -159,7 +160,8 @@ function App() {
   // Get component name from hash (without the # symbol)
   function getComponentNameFromHash() {
     let hash = window.location.hash.replace('#', '') || 'Home';
-    hash = hash.charAt(0).toLocaleUpperCase()+hash.slice(1)
+    hash = hash.replaceAll('/', '-');
+    hash = hash.replace('-' , '')
     return hash
   }
 
