@@ -1554,4 +1554,4 @@ const Transfer = () => {
   );
 };
 
-window.Transfer = Transfer;
+export default Transfer;
