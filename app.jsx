@@ -76,8 +76,6 @@ const ErrorComponent = ({handleRetry , error})=>{
   )
 }
 
-
-
 const RenderComponent = ({ jsx , globalName , props = {} , children }) => {
   
   if(!jsx){
@@ -108,7 +106,26 @@ const RenderComponent = ({ jsx , globalName , props = {} , children }) => {
     }
   }
 
-  let esmUrl = getEsmUrlFromJsx(jsx , globalName);
+  const getEsmUrlFromJsxModule = async (jsx) => {
+    // Transpile JSX -> ESM (préserve import/export)
+    const { code } = Babel.transform(jsx, {
+      presets: ["react"],
+      sourceType: "module",   // <--- important : garde import/export
+    });
+  
+    // Crée un blob en tant que module
+    const blob = new Blob([code], { type: "application/javascript" });
+    const blobUrl = URL.createObjectURL(blob);
+  
+    try {
+      // Charge le module
+      return await import(blobUrl);
+    } finally {
+      URL.revokeObjectURL(blobUrl);
+    }
+  };
+  
+  let esmUrl = getEsmUrlFromJsxModule(jsx);
   const lazyJsxEsm = () => {
     return React.lazy(async () => {
       const mod = await esmUrl;
@@ -156,14 +173,13 @@ const LazyComponent = ({globalName, children , props = {} }) => {
 function App() {
   const [name, setName] = useState(getComponentNameFromHash());
 
-  // Get component name from hash (without the # symbol)
   function getComponentNameFromHash() {
     let hash = window.location.hash.replace('#', '') || 'Home';
-    hash = hash.charAt(0).toLocaleUpperCase()+hash.slice(1)
+    hash = hash.replaceAll('/', '-');
+    hash = hash.replace('-' , '')
     return hash
   }
 
-  // Listen for hash changes
   useEffect(() => {
     const handleHashChange = () => {
       setName(getComponentNameFromHash());
