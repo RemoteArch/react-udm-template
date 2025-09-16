@@ -1,5 +1,11 @@
 const { useState, useRef , useEffect  , useCallback} = React ;
 
+const useWebSocket = ()=>{
+  return {
+    subscribe:()=>{}
+  }
+} 
+
 const StatusBanner = ({ status }) => {
   return (
     <div className={`px-4 py-2 text-sm font-medium ${
@@ -1554,4 +1560,4 @@ const Transfer = () => {
   );
 };
 
-window.Transfer = Transfer;
+export default Transfer;

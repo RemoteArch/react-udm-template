@@ -6,4 +6,4 @@ const Home = () => {
     );
 };
 
-window.Home = Home
+export default Home

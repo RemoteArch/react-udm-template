@@ -24,6 +24,10 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+window.loadModule = async (name)=>{
+  return import(`./modules/${name}.js`);
+}
+
 const ErrorComponent = ({handleRetry , error})=>{
   return(
     <div className="h-screen w-screen flex item-center justify-center bg-gradient-to-br from-white to-gray-200">
@@ -76,9 +80,6 @@ const ErrorComponent = ({handleRetry , error})=>{
   )
 }
 
-
-
-
 const RenderComponent = ({ jsx , globalName , props = {} , children }) => {
   
   if(!jsx){
@@ -89,27 +90,26 @@ const RenderComponent = ({ jsx , globalName , props = {} , children }) => {
     }
   };
 
-  const getEsmUrlFromJsx = async (jsx , globalName) =>{
+  const getEsmUrlFromJsxModule = async (jsx) => {
+    // Transpile JSX -> ESM (préserve import/export)
     const { code } = Babel.transform(jsx, {
-      presets: ['react'],        // JSX -> JS
-      sourceType: 'script',      // code “global” qui utilisera window.React
+      presets: ["react"],
+      sourceType: "module",   // <--- important : garde import/export
     });
-    const esmSource = `
-      const React = window.React;
-      const ReactDOM = window.ReactDOM;
-      (function(){ ${code}\n }).call(window);
-      export default window['${globalName}'];
-    `;
-    const blob = new Blob([esmSource], { type: 'application/javascript' });
+  
+    // Crée un blob en tant que module
+    const blob = new Blob([code], { type: "application/javascript" });
     const blobUrl = URL.createObjectURL(blob);
+  
     try {
+      // Charge le module
       return await import(blobUrl);
     } finally {
       URL.revokeObjectURL(blobUrl);
     }
-  }
-
-  let esmUrl = getEsmUrlFromJsx(jsx , globalName);
+  };
+  
+  let esmUrl = getEsmUrlFromJsxModule(jsx);
   const lazyJsxEsm = () => {
     return React.lazy(async () => {
       const mod = await esmUrl;
@@ -157,7 +157,6 @@ const LazyComponent = ({globalName, children , props = {} }) => {
 function App() {
   const [name, setName] = useState(getComponentNameFromHash());
 
-  // Get component name from hash (without the # symbol)
   function getComponentNameFromHash() {
     let hash = window.location.hash.replace('#', '') || 'Home';
     hash = hash.replaceAll('/', '-');
@@ -165,7 +164,6 @@ function App() {
     return hash
   }
 
-  // Listen for hash changes
   useEffect(() => {
     const handleHashChange = () => {
       setName(getComponentNameFromHash());
@@ -188,16 +186,7 @@ function App() {
 
   return (
     <>
-      <LazyComponent globalName={name} >
-        <div className="animate-pulse space-y-4 p-4">
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-          <div className="space-y-3">
-            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded"></div>
-            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
-          </div>
-          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-md w-1/2 mx-auto"></div>
-        </div>
-      </LazyComponent>
+        <LazyComponent globalName={name} />
     </>
   );
 }
