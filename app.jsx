@@ -25,7 +25,7 @@ class ErrorBoundary extends React.Component {
 }
 
 const loadModule = async (url) => {
-  const finalUrl = /^http?:\/\//i.test(url) ? url : "modules/" + url;
+  const finalUrl = /^http?:\/\//i.test(url) ? url : url;
   const response = await fetch(finalUrl);
   const source = await response.text();
 
@@ -50,97 +50,134 @@ const loadModule = async (url) => {
 
 window.loadModule = loadModule;
 
-const ErrorComponent = ({handleRetry , error})=>{
-  return(
-    <div className="h-screen w-screen flex item-center justify-center bg-gradient-to-br from-white to-gray-200">
-          <div className="h-fit">
-            <div className="text-center mb-6">
-              <div className="mx-auto w-32 h-32 mb-4">
-                <svg viewBox="0 0 24 24" className="w-full h-full text-secondary">
-                  <circle cx="12" cy="12" r="10" className="fill-secondary/10" />
-                  <path 
-                    className="fill-secondary" 
-                    d="M15.5 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm-7 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"
-                  />
-                  <path 
-                    className="fill-none stroke-secondary stroke-2" 
-                    d="M7.5 15.5c2 2 7 2 9 0" 
+const ErrorComponent = ({ handleRetry, error }) => {
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center bg-bg-dark px-4">
+      <div className="relative max-w-lg w-full bg-bg-dark/90 backdrop-blur-xl rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.45)] border border-primary/40 overflow-hidden">
+        {/* Accent border top */}
+        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-secondary to-primary" />
+
+        <div className="p-8 sm:p-10 pt-10 sm:pt-12 text-center text-text-light">
+          {/* Icon */}
+          <div className="mb-6 flex justify-center">
+            <div className="relative">
+              <div className="mx-auto w-24 h-24 flex items-center justify-center rounded-full bg-bg-dark border border-primary/40 shadow-[0_0_0_1px_rgba(59,130,246,0.45)]">
+                <svg viewBox="0 0 24 24" className="w-14 h-14 text-primary">
+                  <path
+                    className="fill-none stroke-current stroke-[1.8]"
                     strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 18h4l2-10 3 14 2-8h5"
+                  />
+                  <path
+                    className="fill-none stroke-current stroke-[1.8]"
+                    strokeLinecap="round"
+                    d="M12 4h.01M18 4h.01M6 4h.01"
                   />
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-tertiary mb-2">Composant introuvable</h2>
-              <p className="text-tertiary/70 mb-2">
-                Le composant demandé n'a pas pu être chargé
-              </p>
-              <div className="hidden bg-secondary/10 rounded-lg p-4 mb-6 text-left">
-                <p className="font-mono text-sm text-secondary break-all">
-                  {String(error)}
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                onClick={handleRetry}
-                className="px-6 py-3 bg-gradient-to-r from-primary to-primary-light text-white rounded-lg hover:from-primary-dark hover:to-primary transition-colors duration-200 flex items-center justify-center gap-3 shadow-md hover:shadow-lg"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.5"><path stroke-miterlimit="10" d="M18.024 7.043A8.374 8.374 0 0 0 3.74 12.955"/><path stroke-linejoin="round" d="m17.35 2.75l.832 3.372a1.123 1.123 0 0 1-.854 1.382l-3.372.843"/><path stroke-miterlimit="10" d="M5.976 16.957a8.374 8.374 0 0 0 14.285-5.912"/><path stroke-linejoin="round" d="m6.65 21.25l-.832-3.372a1.124 1.124 0 0 1 .855-1.382l3.371-.843"/></g></svg>
-                <span>Réessayer</span>
-              </button>
-              
-              <button
-                onClick={() => window.location.reload()}
-                className="px-6 py-3 bg-gradient-to-r from-secondary to-secondary-light text-white rounded-lg hover:from-secondary-dark hover:to-secondary transition-colors duration-200 flex items-center justify-center gap-3 shadow-md hover:shadow-lg"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 12 12"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M10 4c-.8-1.1-2-2.5-4.1-2.5c-2.5 0-4.4 2-4.4 4.5s2 4.5 4.4 4.5c1.3 0 2.5-.6 3.3-1.5M11 1.5v3c0 .3-.2.5-.5.5h-3"/></svg>
-                <span>Reload</span>
-              </button>
+              <div className="pointer-events-none absolute inset-0 rounded-full bg-primary/10 blur-xl" />
             </div>
           </div>
+
+          {/* Title & description */}
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-3">
+            <span className="block text-primary">404</span>
+            <span className="block text-primary/80 text-lg sm:text-xl mt-1">
+              Page introuvable
+            </span>
+          </h1>
+
+          <p className="text-sm sm:text-base text-text-light/80 leading-relaxed max-w-md mx-auto">
+            La page que vous cherchez n’existe pas ou n’a pas pu être chargée.
+            Vérifiez l’adresse ou revenez à l’accueil pour continuer votre
+            navigation.
+          </p>
+
+          {/* Actions */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mt-8">
+            <button
+              onClick={() => {
+                window.location.hash = '#Home';
+                if (typeof handleRetry === 'function') handleRetry();
+              }}
+              className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-sm font-medium bg-secondary text-white shadow-md shadow-primary/30 hover:shadow-xl hover:bg-secondary/90 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg-dark"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                className="shrink-0"
+              >
+                <path
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="m4 12 8-8 8 8M6 10v10h12V10"
+                />
+              </svg>
+              <span>Retour à l’accueil</span>
+            </button>
+
+            <button
+              onClick={() => window.location.reload()}
+              className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-sm font-medium bg-transparent border border-primary/60 text-primary hover:bg-primary/10 hover:border-primary transition-all duration-200 shadow-sm hover:shadow-md hover:shadow-primary/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg-dark"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                className="shrink-0"
+              >
+                <g
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                >
+                  <path d="M18.024 7.043A8.374 8.374 0 0 0 3.74 12.955" />
+                  <path d="m17.35 2.75.832 3.372a1.123 1.123 0 0 1-.854 1.382l-3.372.843" />
+                  <path d="M5.976 16.957a8.374 8.374 0 0 0 14.285-5.912" />
+                  <path d="m6.65 21.25-.832-3.372a1.124 1.124 0 0 1 .855-1.382l3.371-.843" />
+                </g>
+              </svg>
+              <span>Recharger la page</span>
+            </button>
+          </div>
+
+          {/* Technical error (hidden by default) */}
+          <div className="hidden mt-6 text-left">
+            <p className="text-xs uppercase tracking-wide text-text-light/60 mb-1">
+              Détails techniques
+            </p>
+            <div className="bg-bg-dark/80 rounded-lg p-3 text-xs font-mono text-primary/90 break-all border border-primary/40 max-h-32 overflow-auto shadow-inner shadow-primary/30">
+              {String(error)}
+            </div>
+          </div>
+        </div>
       </div>
-  )
-}
+    </div>
+  );
+};
 
-const RenderComponent = ({ jsx , globalName , props = {} , children }) => {
-  
-  if(!jsx){
-    if(children){
-      return children;
-    }else{
-      return null;
-    }
-  };
+const RenderComponent = ({ url , props = {} , children }) => {
 
-  const getEsmUrlFromJsxModule = async (jsx) => {
-    // Transpile JSX -> ESM (préserve import/export)
-    const { code } = Babel.transform(jsx, {
-      presets: ["react"],
-      sourceType: "module",   // <--- important : garde import/export
-    });
-  
-    // Crée un blob en tant que module
-    const blob = new Blob([code], { type: "application/javascript" });
-    const blobUrl = URL.createObjectURL(blob);
-  
-    try {
-      // Charge le module
-      return await import(blobUrl);
-    } finally {
-      URL.revokeObjectURL(blobUrl);
-    }
-  };
-  
-  let esmUrl = getEsmUrlFromJsxModule(jsx);
+  if(!url) return null;
+
   const lazyJsxEsm = () => {
     return React.lazy(async () => {
-      const mod = await esmUrl;
+      const mod = await loadModule(url);
       const Comp = mod?.default;
       if (!Comp) throw new Error(`Aucun export par défaut après chargement de ${globalName}`);
       return { default: Comp };
     });
   }
-  const Comp = React.useMemo(() => lazyJsxEsm(), []);
+
+  const Comp = React.useMemo(() => lazyJsxEsm(), [url]);
   return (
     <ErrorBoundary>
       <React.Suspense fallback={<div>{children}</div>}>
@@ -150,34 +187,15 @@ const RenderComponent = ({ jsx , globalName , props = {} , children }) => {
   );
 };
 
-const LazyComponent = ({globalName, children , props = {} }) => {
-  const [jsxCode , setJsxCode] = React.useState(null);
-  
-  useEffect(() => {
-    if(!globalName) return;
-    getJsxCode().catch((error)=>{
-      console.log(error)
-      setJsxCode('()=>{}')
-    });
-    
-  }, [globalName]);
-
-  const getJsxCode = async () => {
-    const res = await fetch(`./components/${globalName.toLowerCase()}.jsx`, { cache: 'reload' });
-    if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText} pour ${globalName}`);
-    let jsx = await res.text();
-    setJsxCode(jsx)
-  }
-
-  return (
-   <RenderComponent key={jsxCode} jsx={jsxCode} globalName={globalName} props={props}>
-     {children}
-   </RenderComponent>
-  );
-};
 
 function App() {
   const [name, setName] = useState(getComponentNameFromHash());
+  const [url , setUrl] = React.useState(null);
+  
+  useEffect(() => {
+    if(!name) return;
+    setUrl(`./components/${globalName.toLowerCase()}.jsx`);
+  }, [name]);
 
   function getComponentNameFromHash() {
     let hash = window.location.hash.replace('#', '') || 'Home';
@@ -205,9 +223,9 @@ function App() {
   }, []);
 
   return (
-    <>
-        <LazyComponent globalName={name} />
-    </>
+    <RenderComponent key={url} url={url}>
+      {children}
+    </RenderComponent>
   );
 }
 
