@@ -24,9 +24,31 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-window.loadModule = async (name)=>{
-  return import(`./modules/${name}.js`);
-}
+const loadModule = async (url) => {
+  const finalUrl = /^http?:\/\//i.test(url) ? url : "modules/" + url;
+  const response = await fetch(finalUrl);
+  const source = await response.text();
+
+  let code = source;
+  if (/\.jsx$/i.test(url) && window.Babel) {
+    const result = Babel.transform(source, {
+      presets: ["react"],
+      sourceType: "module",
+    });
+    code = result.code;
+  }
+
+  const blob = new Blob([code], { type: "text/javascript" });
+  const blobUrl = URL.createObjectURL(blob);
+  try {
+    const module = await import(blobUrl);
+    return module;
+  } finally {
+    URL.revokeObjectURL(blobUrl);
+  }
+};
+
+window.loadModule = loadModule;
 
 const ErrorComponent = ({handleRetry , error})=>{
   return(
@@ -159,8 +181,6 @@ function App() {
 
   function getComponentNameFromHash() {
     let hash = window.location.hash.replace('#', '') || 'Home';
-    hash = hash.replaceAll('/', '-');
-    hash = hash.replace('-' , '')
     return hash
   }
 

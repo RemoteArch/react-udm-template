@@ -3,38 +3,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>React UDM Template</title>
-    
-    <!-- Tailwind CSS -->
-    <script src="./assets/tailwind.min.js"></script>
-    
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    
-    <!-- React Local -->
-    <script src="./assets/react.production.min.js"></script>
-    <script src="./assets/react-dom.production.min.js"></script>
-    
-    <script src="./assets/babel.min.js"></script>
-        
+    <script src="./assets/js/react.production.min.js"></script>
+    <script src="./assets/js/react-dom.production.min.js"></script>
+    <script src="./assets/js/babel.min.js"></script>
+    <script src="./assets/js/tailwind.min.js"></script>
     <style type="text/tailwindcss">
         @theme {
-            --color-primary: #E94E77;
-            --color-secondary: #3BB273;
-            --color-tertiary: #2D2D2D;
-
-            --color-primary-light: #f06a8d;
-            --color-primary-dark: #c53f63;
-
-            --color-secondary-light: #56c38a;
-            --color-secondary-dark: #2e8c5a;
-
-            --color-tertiary-light: #444444;
-            --color-tertiary-dark: #1a1a1a;
-        }
+        /* Palette "33 EXPORT" - Finale Le Grand Défi */
+        --color-primary:     #E31E24; /* Rouge vif - bandeau principal, CTA */
+        --color-secondary:   #C41E3A; /* Rouge foncé - hover, focus */
+        --color-accent:      #FFD700; /* Or/Jaune - badges, décorations */
+        --color-bg-dark:     #2D5016; /* Vert foncé - fond principal */
+        --color-bg-medium:   #3D7A1F; /* Vert moyen - sections, cartes */
+        --color-bg-light:    #4A8F28; /* Vert clair - hover states */
+        --color-text-light:  #FFFEF5; /* Blanc/Crème - texte principal */
+        --color-text-dark:   #1A1A1A; /* Noir - texte sur fond clair */
+       }
     </style>
-    
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="min-h-screen">
     <div id="root"></div>
     <script type="text/babel" data-type="module" src="app.jsx"></script>
 </body>
