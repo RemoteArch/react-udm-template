@@ -187,7 +187,6 @@ const RenderComponent = ({ url , props = {} , children }) => {
   );
 };
 
-
 function App() {
   const [name, setName] = useState(getComponentNameFromHash());
   const [url , setUrl] = React.useState(null);
