@@ -194,7 +194,7 @@ function App() {
   
   useEffect(() => {
     if(!name) return;
-    setUrl(`./components/${globalName.toLowerCase()}.jsx`);
+    setUrl(`./components/${name.toLowerCase()}.jsx`);
   }, [name]);
 
   function getComponentNameFromHash() {
@@ -223,9 +223,7 @@ function App() {
   }, []);
 
   return (
-    <RenderComponent key={url} url={url}>
-      {children}
-    </RenderComponent>
+    <RenderComponent key={url} url={url}/>
   );
 }
 
