@@ -78,7 +78,7 @@ const loadModule = async (url) => {
     if (!window.Babel) {
       await new Promise((resolve, reject) => {
         const script = document.createElement('script');
-        script.src = 'assets/js/babel.min.js';
+        script.src = 'https://unpkg.com/@babel/standalone/babel.min.js';
         script.onload = resolve;
         script.onerror = () => reject(new Error('Failed to load Babel'));
         document.head.appendChild(script);
