@@ -25,12 +25,22 @@ class ErrorBoundary extends React.Component {
 }
 
 const loadModule = async (url) => {
-  const finalUrl = /^http?:\/\//i.test(url) ? url : url;
+  const separator = url.includes('?') ? '&' : '?';
+  const finalUrl = `${url}${separator}_ts=${Date.now()}`;
   const response = await fetch(finalUrl);
   const source = await response.text();
 
   let code = source;
-  if (/\.jsx$/i.test(url) && window.Babel) {
+  if (/\.jsx$/i.test(url)) {
+    if (!window.Babel) {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'assets/js/babel.min.js';
+        script.onload = resolve;
+        script.onerror = () => reject(new Error('Failed to load Babel'));
+        document.head.appendChild(script);
+      });
+    }
     const result = Babel.transform(source, {
       presets: ["react"],
       sourceType: "module",
@@ -172,7 +182,7 @@ const RenderComponent = ({ url , props = {} , children }) => {
     return React.lazy(async () => {
       const mod = await loadModule(url);
       const Comp = mod?.default;
-      if (!Comp) throw new Error(`Aucun export par défaut après chargement de ${globalName}`);
+      if (!Comp) throw new Error(`Aucun export par défaut après chargement`);
       return { default: Comp };
     });
   }

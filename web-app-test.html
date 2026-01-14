@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web App Component</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; }
+  </style>
+  <style>
+    :root {
+      --color-primary: #0F766E;
+      --color-secondary: #0369A1;
+      --color-accent: #F97316;
+      --color-bg-dark: #020617;
+      --color-bg-medium: #0B1120;
+      --color-bg-light: #1E293B;
+      --color-text-light: #E5E7EB;
+      --color-text-dark: #020617;
+    }
+  </style>
+
+</head>
+<body class="bg-gray-900 text-white h-screen overflow-hidden flex">
+  
+  <!-- Sidebar -->
+  <aside class="w-64 bg-gray-800 border-r border-gray-700 p-4 flex flex-col h-screen overflow-y-auto">
+    <h1 class="text-lg font-bold text-blue-400 mb-6">🧪 Test Interface</h1>
+    
+    <!-- URL -->
+    <div class="mb-4">
+      <label class="block text-xs text-gray-400 mb-1">URL</label>
+      <input type="text" id="urlInput" value="./components/home.jsx" 
+        class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-blue-500">
+      <button onclick="applyUrl()" class="w-full mt-1 bg-blue-600 hover:bg-blue-700 px-2 py-1.5 rounded text-xs">setUrl</button>
+    </div>
+    
+    <!-- Error URL -->
+    <div class="mb-4">
+      <label class="block text-xs text-gray-400 mb-1">Error URL</label>
+      <input type="text" id="errorUrlInput" value="" placeholder="./error.jsx"
+        class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-blue-500">
+      <button onclick="applyErrorUrl()" class="w-full mt-1 bg-orange-600 hover:bg-orange-700 px-2 py-1.5 rounded text-xs">setErrorUrl</button>
+    </div>
+    
+    <!-- Props -->
+    <div class="mb-4">
+      <label class="block text-xs text-gray-400 mb-1">Props (JSON)</label>
+      <input type="text" id="propsInput" value='{"theme":"dark"}' 
+        class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-blue-500">
+      <button onclick="applyProps()" class="w-full mt-1 bg-green-600 hover:bg-green-700 px-2 py-1.5 rounded text-xs">setProps</button>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="border-t border-gray-700 pt-4 mt-2">
+      <span class="block text-xs text-gray-400 mb-2">Tests rapides</span>
+      <div class="space-y-1">
+        <button onclick="loadHome()" class="w-full text-left bg-gray-700 hover:bg-gray-600 px-2 py-1.5 rounded text-xs">✅ Home</button>
+        <button onclick="loadInvalid()" class="w-full text-left bg-gray-700 hover:bg-gray-600 px-2 py-1.5 rounded text-xs">❌ URL invalide</button>
+        <button onclick="loadWithError()" class="w-full text-left bg-gray-700 hover:bg-gray-600 px-2 py-1.5 rounded text-xs">🔄 Invalide + Error</button>
+        <button onclick="showState()" class="w-full text-left bg-gray-700 hover:bg-gray-600 px-2 py-1.5 rounded text-xs">📋 État</button>
+      </div>
+    </div>
+    
+    <!-- Console -->
+    <div class="border-t border-gray-700 pt-4 mt-4 flex-1 flex flex-col min-h-0">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs text-gray-400">Console</span>
+        <button onclick="clearConsole()" class="text-xs text-gray-500 hover:text-gray-300">×</button>
+      </div>
+      <div id="console" class="flex-1 overflow-auto font-mono text-xs text-green-400 space-y-0.5 bg-gray-900 rounded p-2"></div>
+    </div>
+  </aside>
+  
+  <!-- Main Content -->
+  <main class="flex-1 h-screen overflow-auto">
+    <web-app id="testApp" url="./components/home.jsx">
+      <div class="flex items-center justify-center h-full text-gray-500">Chargement...</div>
+    </web-app>
+  </main>
+  
+  <script src="./web-app.js"></script>
+  <script>
+    const app = document.getElementById('testApp');
+    const consoleEl = document.getElementById('console');
+    
+    function log(msg, type = 'info') {
+      const colors = { info: 'text-green-400', error: 'text-red-400', warn: 'text-yellow-400' };
+      const time = new Date().toLocaleTimeString();
+      consoleEl.innerHTML += `<div class="${colors[type]}">[${time}] ${msg}</div>`;
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+    
+    function clearConsole() {
+      consoleEl.innerHTML = '';
+    }
+    
+    function applyUrl() {
+      const url = document.getElementById('urlInput').value;
+      app.setUrl(url);
+      log(`setUrl("${url}")`);
+    }
+    
+    function applyErrorUrl() {
+      const url = document.getElementById('errorUrlInput').value;
+      app.setErrorUrl(url);
+      log(`setErrorUrl("${url}")`);
+    }
+    
+    function applyProps() {
+      try {
+        const props = JSON.parse(document.getElementById('propsInput').value);
+        app.setProps(props);
+        log(`setProps(${JSON.stringify(props)})`);
+      } catch (e) {
+        log(`Erreur JSON: ${e.message}`, 'error');
+      }
+    }
+    
+    function loadHome() {
+      document.getElementById('urlInput').value = './components/home.jsx';
+      applyUrl();
+    }
+    
+    function loadInvalid() {
+      document.getElementById('urlInput').value = './components/not-found.jsx';
+      document.getElementById('errorUrlInput').value = '';
+      app.setErrorUrl('');
+      applyUrl();
+    }
+    
+    function loadWithError() {
+      document.getElementById('urlInput').value = './components/not-found.jsx';
+      document.getElementById('errorUrlInput').value = './components/custom-error.jsx';
+      app.setErrorUrl('./components/custom-error.jsx');
+      applyUrl();
+      log('Test: URL invalide avec page erreur personnalisée (qui échouera aussi → fallback)', 'warn');
+    }
+    
+    function showState() {
+      log(`URL: ${app.getUrl()}`);
+      log(`ErrorURL: ${app.getErrorUrl()}`);
+      log(`Props: ${JSON.stringify(app.getProps())}`);
+    }
+    
+    log('Interface de test prête');
+    log(`État initial - URL: ${app.getUrl()}`);
+  </script>
+</body>
+</html>
