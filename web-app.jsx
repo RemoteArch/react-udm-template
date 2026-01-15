@@ -1,3 +1,22 @@
+const loadScript = (src) => {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error(`Failed to load ${src}`));
+    document.head.appendChild(script);
+  });
+};
+
+window.loadScript = loadScript;
+
+if (typeof React === 'undefined') {
+  await loadScript('https://unpkg.com/react@18/umd/react.production.min.js');
+}
+if (typeof ReactDOM === 'undefined') {
+  await loadScript('https://unpkg.com/react-dom@18/umd/react-dom.production.min.js');
+}
+
 const { useState , useEffect } = React;
 
 class ErrorBoundary extends React.Component {

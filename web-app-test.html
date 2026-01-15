@@ -4,9 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Web App Component</title>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { font-family: system-ui, -apple-system, sans-serif; }
@@ -83,8 +80,9 @@
     </web-app>
   </main>
   
-  <script src="./web-app.js"></script>
-  <script>
+  <script type="module">
+    import './web-app.js';
+    
     const app = document.getElementById('testApp');
     const consoleEl = document.getElementById('console');
     
@@ -146,6 +144,15 @@
       log(`ErrorURL: ${app.getErrorUrl()}`);
       log(`Props: ${JSON.stringify(app.getProps())}`);
     }
+    
+    window.clearConsole = clearConsole;
+    window.applyUrl = applyUrl;
+    window.applyErrorUrl = applyErrorUrl;
+    window.applyProps = applyProps;
+    window.loadHome = loadHome;
+    window.loadInvalid = loadInvalid;
+    window.loadWithError = loadWithError;
+    window.showState = showState;
     
     log('Interface de test prête');
     log(`État initial - URL: ${app.getUrl()}`);
