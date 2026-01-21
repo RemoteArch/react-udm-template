@@ -31,17 +31,25 @@
     <!-- URL -->
     <div class="mb-4">
       <label class="block text-xs text-gray-400 mb-1">URL</label>
-      <input type="text" id="urlInput" value="./components/home.jsx" 
+      <input type="text" id="urlInput" value="home.jsx" 
         class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-blue-500">
-      <button onclick="applyUrl()" class="w-full mt-1 bg-blue-600 hover:bg-blue-700 px-2 py-1.5 rounded text-xs">setUrl</button>
+      <button onclick="applyUrl()" class="w-full mt-1 bg-blue-600 hover:bg-blue-700 px-2 py-1.5 rounded text-xs">setAttribute('url')</button>
+    </div>
+    
+    <!-- Base URL -->
+    <div class="mb-4">
+      <label class="block text-xs text-gray-400 mb-1">Base URL</label>
+      <input type="text" id="baseUrlInput" value="./components/" placeholder="https://example.com/"
+        class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-blue-500">
+      <button onclick="applyBaseUrl()" class="w-full mt-1 bg-purple-600 hover:bg-purple-700 px-2 py-1.5 rounded text-xs">setBaseUrl</button>
     </div>
     
     <!-- Error URL -->
     <div class="mb-4">
       <label class="block text-xs text-gray-400 mb-1">Error URL</label>
-      <input type="text" id="errorUrlInput" value="" placeholder="./error.jsx"
+      <input type="text" id="errorUrlInput" value="error.jsx" placeholder="./error.jsx"
         class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-blue-500">
-      <button onclick="applyErrorUrl()" class="w-full mt-1 bg-orange-600 hover:bg-orange-700 px-2 py-1.5 rounded text-xs">setErrorUrl</button>
+      <button onclick="applyErrorUrl()" class="w-full mt-1 bg-orange-600 hover:bg-orange-700 px-2 py-1.5 rounded text-xs">setAttribute('error')</button>
     </div>
     
     <!-- Props -->
@@ -75,7 +83,7 @@
   
   <!-- Main Content -->
   <main class="flex-1 h-screen overflow-auto">
-    <web-app id="testApp" url="./components/home.jsx">
+    <web-app id="testApp" base-url="./components/" url="home.jsx">
       <div class="flex items-center justify-center h-full text-gray-500">Chargement...</div>
     </web-app>
   </main>
@@ -99,14 +107,20 @@
     
     function applyUrl() {
       const url = document.getElementById('urlInput').value;
-      app.setUrl(url);
-      log(`setUrl("${url}")`);
+      app.setAttribute('url', url);
+      log(`setAttribute('url', "${url}")`);
+    }
+    
+    function applyBaseUrl() {
+      const url = document.getElementById('baseUrlInput').value;
+      app.setAttribute('base-url', url);
+      log(`setBaseUrl("${url}")`);
     }
     
     function applyErrorUrl() {
       const url = document.getElementById('errorUrlInput').value;
-      app.setErrorUrl(url);
-      log(`setErrorUrl("${url}")`);
+      app.setAttribute('error', url);
+      log(`setAttribute('error', "${url}")`);
     }
     
     function applyProps() {
@@ -120,33 +134,35 @@
     }
     
     function loadHome() {
-      document.getElementById('urlInput').value = './components/home.jsx';
+      document.getElementById('urlInput').value = 'home.jsx';
       applyUrl();
     }
     
     function loadInvalid() {
-      document.getElementById('urlInput').value = './components/not-found.jsx';
+      document.getElementById('urlInput').value = 'not-found.jsx';
       document.getElementById('errorUrlInput').value = '';
-      app.setErrorUrl('');
+      app.setAttribute('error', '');
       applyUrl();
     }
     
     function loadWithError() {
-      document.getElementById('urlInput').value = './components/not-found.jsx';
-      document.getElementById('errorUrlInput').value = './components/custom-error.jsx';
-      app.setErrorUrl('./components/custom-error.jsx');
+      document.getElementById('urlInput').value = 'not-found.jsx';
+      document.getElementById('errorUrlInput').value = 'custom-error.jsx';
+      app.setAttribute('error', 'custom-error.jsx');
       applyUrl();
       log('Test: URL invalide avec page erreur personnalisée (qui échouera aussi → fallback)', 'warn');
     }
     
     function showState() {
-      log(`URL: ${app.getUrl()}`);
-      log(`ErrorURL: ${app.getErrorUrl()}`);
+      log(`URL: ${app.getAttribute('url') || '(non défini)'}`);
+      log(`BaseURL: ${app.getAttribute('base-url') || '(non défini)'}`);
+      log(`ErrorURL: ${app.getAttribute('error') || '(non défini)'}`);
       log(`Props: ${JSON.stringify(app.getProps())}`);
     }
     
     window.clearConsole = clearConsole;
     window.applyUrl = applyUrl;
+    window.applyBaseUrl = applyBaseUrl;
     window.applyErrorUrl = applyErrorUrl;
     window.applyProps = applyProps;
     window.loadHome = loadHome;
@@ -155,7 +171,7 @@
     window.showState = showState;
     
     log('Interface de test prête');
-    log(`État initial - URL: ${app.getUrl()}`);
+    log(`État initial - URL: ${app.getAttribute('url')}`);
   </script>
 </body>
 </html>

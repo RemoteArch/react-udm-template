@@ -86,7 +86,12 @@ const ErrorPageLoader = ({ errorUrl, onErrorPageFailed }) => {
   return <ErrorPage />;
 };
 
+let BASE_URL = '';
+
 const loadModule = async (url) => {
+  if(BASE_URL){
+    url = BASE_URL+url;
+  }
   const separator = url.includes('?') ? '&' : '?';
   const finalUrl = `${url}${separator}_ts=${Date.now()}`;
   const response = await fetch(finalUrl);
@@ -182,6 +187,7 @@ class WebAppElement extends HTMLElement {
     this._props = {};
     this._children = null;
     this._root = null;
+    this._observer = null;
   }
 
   connectedCallback() {
@@ -190,58 +196,52 @@ class WebAppElement extends HTMLElement {
     this._collectProps();
     const initialUrl = this.getAttribute('url');
     this._errorUrl = this.getAttribute('error');
+    BASE_URL = this.getAttribute('base-url') || '';
     if (initialUrl) {
       this._url = initialUrl;
       this._render();
     }
+
+    this._observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === 'attributes') {
+          this._handleAttributeChange(mutation.attributeName, mutation.oldValue);
+        }
+      }
+    });
+    this._observer.observe(this, { attributes: true, attributeOldValue: true });
   }
 
   disconnectedCallback() {
+    if (this._observer) {
+      this._observer.disconnect();
+    }
     if (this._root) {
       this._root.unmount();
     }
   }
 
-  attributeChangedCallback(name, oldValue, newValue) {
-    if (oldValue !== newValue) {
-      if (name === 'url') {
+  _handleAttributeChange(name, oldValue) {
+    const newValue = this.getAttribute(name);
+    if (name === 'url') {
         this._url = newValue;
       } else if (name === 'error') {
         this._errorUrl = newValue;
+      } else if (name === 'base-url') {
+        BASE_URL = newValue || '';
       } else {
         this._props[name] = newValue;
       }
       this._render();
-    }
   }
 
   _collectProps() {
     this._props = {};
     for (const attr of this.attributes) {
-      if (attr.name !== 'url' && attr.name !== 'error') {
+      if (attr.name !== 'url' && attr.name !== 'error' && attr.name !== 'base-url') {
         this._props[attr.name] = attr.value;
       }
     }
-  }
-
-  setErrorUrl(errorUrl) {
-    this._errorUrl = errorUrl;
-    this.setAttribute('error', errorUrl);
-    this._render();
-  }
-
-  getErrorUrl() {
-    return this._errorUrl;
-  }
-
-  setUrl(url) {
-    this._url = url;
-    this.setAttribute('url', url);
-    this._render();
-  }
-
-  getUrl() {
-    return this._url;
   }
 
   setProps(props) {
