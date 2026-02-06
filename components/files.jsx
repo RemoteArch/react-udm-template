@@ -1,6 +1,468 @@
 const { useState, useEffect, useCallback, useMemo } = React;
 
 // ============================================================================
+// Utils
+// ============================================================================
+const joinPath = (...parts) => {
+  return parts.filter(Boolean).join('/').replace(/\/+/g, '/');
+};
+
+const formatSize = (bytes) => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+const formatDate = (date) => {
+  if (!date) return '-';
+  return new Date(date).toLocaleString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+const getFileIcon = (name, isDir) => {
+  if (isDir) return Icons.Folder;
+  const ext = name.split('.').pop().toLowerCase();
+  switch (ext) {
+    case 'txt': case 'md': case 'log': return Icons.FileText;
+    case 'js': case 'jsx': case 'ts': case 'tsx': case 'html': case 'css': case 'json': case 'py': return Icons.FileCode;
+    case 'jpg': case 'jpeg': case 'png': case 'gif': case 'svg': case 'webp': return Icons.FileImage;
+    case 'zip': case 'rar': case '7z': case 'gz': return Icons.FileZip;
+    default: return Icons.File;
+  }
+};
+
+// ============================================================================
+// Helper Components
+// ============================================================================
+const Breadcrumb = ({ path, onNavigate }) => {
+  const parts = path.split('/').filter(Boolean);
+  return (
+    <div className="flex items-center gap-1 text-sm overflow-x-auto whitespace-nowrap scrollbar-hide">
+      <button 
+        onClick={() => onNavigate('')}
+        className="px-2 py-1 hover:bg-gray-800 rounded text-gray-400 hover:text-white transition-colors flex items-center gap-1.5"
+      >
+        <Icons.Home className="w-3.5 h-3.5" />
+        <span className="font-medium">root</span>
+      </button>
+      {parts.map((part, i) => (
+        <React.Fragment key={i}>
+          <Icons.ChevronRight className="w-3 h-3 text-gray-600" />
+          <button
+            onClick={() => onNavigate(parts.slice(0, i + 1).join('/'))}
+            className="px-2 py-1 hover:bg-gray-800 rounded text-gray-400 hover:text-white transition-colors font-medium"
+          >
+            {part}
+          </button>
+        </React.Fragment>
+      ))}
+    </div>
+  );
+};
+
+const FileItemGrid = ({ item, isSelected, onSelect, onOpen, onContextMenu }) => {
+  const Icon = getFileIcon(item.name, item.isDir);
+  return (
+    <div
+      onClick={onSelect}
+      onDoubleClick={onOpen}
+      onContextMenu={onContextMenu}
+      className={`flex flex-col items-center p-3 rounded-xl cursor-default select-none transition-all group border
+        ${isSelected 
+          ? 'bg-blue-600/20 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.1)]' 
+          : 'bg-transparent border-transparent hover:bg-gray-800/40 hover:border-gray-700/50'}`}
+    >
+      <div className={`relative p-3 rounded-lg mb-2 transition-transform duration-200 group-hover:scale-110
+        ${item.isDir ? 'text-blue-400' : 'text-gray-400'}`}>
+        <Icon className="w-12 h-12" />
+        {item.isDir && <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-gray-900 border border-gray-700 rounded-full flex items-center justify-center scale-0 group-hover:scale-100 transition-transform" />}
+      </div>
+      <span className="text-[11px] font-medium text-center truncate w-full px-1" title={item.name}>
+        {item.name}
+      </span>
+    </div>
+  );
+};
+
+const FileItemList = ({ item, isSelected, onSelect, onOpen, onContextMenu }) => {
+  const Icon = getFileIcon(item.name, item.isDir);
+  return (
+    <div
+      onClick={onSelect}
+      onDoubleClick={onOpen}
+      onContextMenu={onContextMenu}
+      className={`flex items-center gap-4 px-4 py-2 cursor-default select-none transition-colors
+        ${isSelected ? 'bg-blue-600/20 text-blue-400' : 'hover:bg-gray-800/50 text-gray-300'}`}
+    >
+      <div className={`flex-shrink-0 ${item.isDir ? 'text-blue-400' : 'text-gray-500'}`}>
+        <Icon className="w-4 h-4" />
+      </div>
+      <div className="flex-1 min-w-0 font-medium text-sm truncate">
+        {item.name}
+      </div>
+      <div className="w-24 text-right text-xs font-mono text-gray-500">
+        {item.isDir ? '-' : formatSize(item.size)}
+      </div>
+      <div className="w-36 text-right text-xs font-mono text-gray-500">
+        {formatDate(item.modifiedAt)}
+      </div>
+    </div>
+  );
+};
+
+const ContextMenu = ({ x, y, items, onClose }) => {
+  useEffect(() => {
+    const handleGlobalClick = () => onClose();
+    window.addEventListener('click', handleGlobalClick);
+    return () => window.removeEventListener('click', handleGlobalClick);
+  }, [onClose]);
+
+  return (
+    <div 
+      className="fixed z-[9999] w-56 bg-gray-900/95 backdrop-blur-xl border border-gray-800 rounded-lg shadow-2xl py-1 animate-in fade-in zoom-in duration-100"
+      style={{ top: y, left: x }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {items.map((item, i) => (
+        item.separator ? (
+          <div key={i} className="my-1 border-t border-gray-800" />
+        ) : (
+          <button
+            key={i}
+            onClick={() => { item.onClick(); onClose(); }}
+            className="w-full flex items-center gap-3 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-blue-600 hover:text-white transition-colors group"
+          >
+            {item.icon && <item.icon className="w-3.5 h-3.5 text-gray-500 group-hover:text-white" />}
+            <span>{item.label}</span>
+          </button>
+        )
+      ))}
+    </div>
+  );
+};
+
+const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
+  if (!isOpen) return null;
+  const sizes = { sm: 'max-w-md', md: 'max-w-2xl', lg: 'max-w-4xl', xl: 'max-w-6xl' };
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div 
+        className={`w-full ${sizes[size]} bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-300`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
+          <h3 className="text-sm font-bold text-gray-200 uppercase tracking-wider">{title}</h3>
+          <button onClick={onClose} className="p-2 hover:bg-gray-800 rounded-lg text-gray-500 hover:text-white transition-colors">
+            <Icons.Close className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="p-6">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const FileEditor = ({ path, content: initialContent, isNew, onSave, onClose }) => {
+  const [content, setContent] = useState(initialContent);
+  const [fileName, setFileName] = useState(isNew ? '' : path.split('/').pop());
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const fullPath = isNew ? joinPath(path, fileName) : path;
+      await onSave(fullPath, content);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      {isNew && (
+        <div>
+          <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">Nom du fichier</label>
+          <input
+            type="text"
+            value={fileName}
+            onChange={(e) => setFileName(e.target.value)}
+            className="w-full bg-black border border-gray-800 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+            placeholder="script.js"
+            autoFocus
+          />
+        </div>
+      )}
+      <div>
+        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">Contenu</label>
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          className="w-full h-96 bg-black border border-gray-800 rounded-lg px-4 py-3 text-sm font-mono focus:outline-none focus:border-blue-500 transition-colors resize-none"
+          spellCheck="false"
+        />
+      </div>
+      <div className="flex justify-end gap-3 mt-2">
+        <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors">Annuler</button>
+        <button
+          onClick={handleSave}
+          disabled={isSaving || (isNew && !fileName)}
+          className="px-6 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-bold transition-all shadow-lg shadow-blue-600/20"
+        >
+          {isSaving ? 'Enregistrement...' : 'Enregistrer'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const NewFolderModal = ({ currentPath, onCreate, onClose }) => {
+  const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    setLoading(true);
+    try {
+      await onCreate(joinPath(currentPath, name.trim()));
+      onClose();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div>
+        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">Nom du dossier</label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full bg-black border border-gray-800 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+          placeholder="Nouveau dossier"
+          autoFocus
+        />
+      </div>
+      <div className="flex justify-end gap-3">
+        <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors">Annuler</button>
+        <button
+          type="submit"
+          disabled={loading || !name.trim()}
+          className="px-6 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-lg text-sm font-bold transition-all"
+        >
+          Créer
+        </button>
+      </div>
+    </form>
+  );
+};
+
+const UploadModal = ({ currentPath, onUpload, onClose }) => {
+  const [files, setFiles] = useState([]);
+  const [progress, setProgress] = useState({});
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileChange = (e) => {
+    setFiles(Array.from(e.target.files));
+  };
+
+  const handleUpload = async () => {
+    setIsUploading(true);
+    for (const file of files) {
+      await onUpload(currentPath, file, (p) => {
+        setProgress(prev => ({ ...prev, [file.name]: p }));
+      });
+    }
+    setIsUploading(false);
+    onClose();
+  };
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="relative group">
+        <input
+          type="file"
+          multiple
+          onChange={handleFileChange}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+        />
+        <div className="border-2 border-dashed border-gray-800 group-hover:border-blue-500/50 rounded-2xl p-8 transition-colors text-center">
+          <Icons.Upload className="w-10 h-10 text-gray-600 group-hover:text-blue-400 mx-auto mb-3 transition-colors" />
+          <p className="text-sm text-gray-400 group-hover:text-gray-300">
+            {files.length > 0 ? `${files.length} fichiers sélectionnés` : 'Cliquez ou glissez-déposez pour uploader'}
+          </p>
+        </div>
+      </div>
+      
+      {files.length > 0 && (
+        <div className="max-h-48 overflow-y-auto space-y-2 px-1">
+          {files.map(file => (
+            <div key={file.name} className="flex flex-col gap-1.5 p-3 bg-black/50 border border-gray-800 rounded-xl">
+              <div className="flex justify-between items-center text-xs">
+                <span className="font-medium text-gray-300 truncate max-w-[200px]">{file.name}</span>
+                <span className="text-gray-500 font-mono">{progress[file.name] || 0}%</span>
+              </div>
+              <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-blue-500 transition-all duration-300 shadow-[0_0_8px_rgba(59,130,246,0.5)]"
+                  style={{ width: `${progress[file.name] || 0}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="flex justify-end gap-3 border-t border-gray-800 pt-6">
+        <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors">Annuler</button>
+        <button
+          onClick={handleUpload}
+          disabled={files.length === 0 || isUploading}
+          className="px-6 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-lg text-sm font-bold transition-all shadow-lg shadow-blue-600/20"
+        >
+          {isUploading ? 'Transfert en cours...' : 'Démarrer l\'upload'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const DeleteModal = ({ selectedItems, onDelete, onClose }) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleConfirm = async () => {
+    setLoading(true);
+    try {
+      await onDelete();
+      onClose();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-4 p-4 bg-red-900/10 border border-red-900/20 rounded-xl">
+        <Icons.Trash className="w-8 h-8 text-red-500" />
+        <div>
+          <p className="text-sm font-bold text-red-400">Confirmer la suppression ?</p>
+          <p className="text-xs text-red-400/70">Cette action est irréversible.</p>
+        </div>
+      </div>
+      <p className="text-sm text-gray-400 px-1">
+        Êtes-vous sûr de vouloir supprimer {selectedItems.length} élément(s) ?
+      </p>
+      <div className="flex justify-end gap-3 mt-2">
+        <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors">Annuler</button>
+        <button
+          onClick={handleConfirm}
+          disabled={loading}
+          className="px-6 py-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 rounded-lg text-sm font-bold transition-all shadow-lg shadow-red-600/20"
+        >
+          Supprimer
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const ZipModal = ({ selectedItems, currentPath, onZip, onClose }) => {
+  const [name, setName] = useState(selectedItems.length === 1 ? `${selectedItems[0].name}.zip` : 'archive.zip');
+  const [loading, setLoading] = useState(false);
+
+  const handleConfirm = async () => {
+    setLoading(true);
+    try {
+      const paths = selectedItems.map(item => joinPath(currentPath, item.name));
+      await onZip(joinPath(currentPath, name), paths);
+      onClose();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div>
+        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">Nom de l'archive</label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full bg-black border border-gray-800 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+          placeholder="archive.zip"
+          autoFocus
+        />
+      </div>
+      <div className="flex justify-end gap-3">
+        <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors">Annuler</button>
+        <button
+          onClick={handleConfirm}
+          disabled={loading || !name.trim()}
+          className="px-6 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-lg text-sm font-bold transition-all"
+        >
+          Compresser
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const UnzipModal = ({ selectedItem, currentPath, onUnzip, onClose }) => {
+  const [dest, setDest] = useState(currentPath);
+  const [loading, setLoading] = useState(false);
+
+  const handleConfirm = async () => {
+    setLoading(true);
+    try {
+      await onUnzip(joinPath(currentPath, selectedItem.name), dest);
+      onClose();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="p-3 bg-blue-900/10 border border-blue-900/20 rounded-xl mb-2">
+        <p className="text-xs font-bold text-blue-400 uppercase mb-1">Archive</p>
+        <p className="text-sm text-gray-300 font-mono truncate">{selectedItem.name}</p>
+      </div>
+      <div>
+        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">Dossier de destination</label>
+        <input
+          type="text"
+          value={dest}
+          onChange={(e) => setDest(e.target.value)}
+          className="w-full bg-black border border-gray-800 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+          placeholder="/destination/path"
+        />
+      </div>
+      <div className="flex justify-end gap-3">
+        <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors">Annuler</button>
+        <button
+          onClick={handleConfirm}
+          disabled={loading}
+          className="px-6 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-lg text-sm font-bold transition-all"
+        >
+          Extraire
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
 // API Service
 // ============================================================================
 const CHUNK_SIZE = 1024 * 1024; // 1MB
@@ -601,7 +1063,7 @@ const FileManager = ({ baseUrl = '', className = '' }) => {
 
   return (
     <div className={`flex h-full bg-black text-white ${className}`}>
-      <Sidebar currentPath={currentPath} onNavigate={loadDirectory} />
+      {/* <Sidebar currentPath={currentPath} onNavigate={loadDirectory} /> */}
       
       <div className="flex-1 flex flex-col min-w-0 bg-gray-900/30">
         <Toolbar
