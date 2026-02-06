@@ -109,280 +109,183 @@ const createFileAPI = (baseUrl) => {
 // Icons
 // ============================================================================
 const Icons = {
-  Folder: () => (
-    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-      <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+  Folder: ({ className = "w-5 h-5" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2z" />
     </svg>
   ),
-  FolderOpen: () => (
-    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-      <path fillRule="evenodd" d="M2 6a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1H8a3 3 0 00-3 3v1.5a1.5 1.5 0 01-3 0V6z" clipRule="evenodd" />
-      <path d="M6 12a2 2 0 012-2h8a2 2 0 012 2v2a2 2 0 01-2 2H2h2a2 2 0 002-2v-2z" />
+  FolderOpen: ({ className = "w-5 h-5" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m6 14 1.45-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.55 6a2 2 0 0 1-1.94 1.5H4a2 2 0 0 1-2-2V5c0-1.1.9-2 2-2h3.93a2 2 0 0 1 1.66.9l.82 1.2a2 2 0 0 0 1.66.9H18a2 2 0 0 1 2 2v2" />
     </svg>
   ),
-  File: () => (
-    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+  File: ({ className = "w-5 h-5" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+      <polyline points="14 2 14 8 20 8" />
     </svg>
   ),
-  FileText: () => (
-    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+  FileText: ({ className = "w-5 h-5" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
+      <line x1="10" y1="9" x2="8" y2="9" />
     </svg>
   ),
-  FileCode: () => (
-    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+  FileCode: ({ className = "w-5 h-5" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+      <polyline points="14 2 14 8 20 8" />
+      <path d="m10 13-2 2 2 2" />
+      <path d="m14 17 2-2-2-2" />
     </svg>
   ),
-  FileImage: () => (
-    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-      <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+  FileImage: ({ className = "w-5 h-5" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+      <circle cx="8.5" cy="8.5" r="1.5" />
+      <polyline points="21 15 16 10 5 21" />
     </svg>
   ),
-  FileZip: () => (
-    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm4 0h2v2H8V4zm2 4H8v2h2V8zm-2 4h2v2H8v-2z" clipRule="evenodd" />
+  FileZip: ({ className = "w-5 h-5" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+      <polyline points="14 2 14 8 20 8" />
+      <path d="M12 12v6" />
+      <path d="m15 15-3 3-3-3" />
     </svg>
   ),
-  ChevronRight: () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+  ChevronRight: ({ className = "w-4 h-4" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="9 18 15 12 9 6" />
     </svg>
   ),
-  ChevronDown: () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+  ChevronDown: ({ className = "w-4 h-4" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="6 9 12 15 18 9" />
     </svg>
   ),
-  Plus: () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+  Plus: ({ className = "w-4 h-4" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
     </svg>
   ),
-  Trash: () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+  Trash: ({ className = "w-4 h-4" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <line x1="10" y1="11" x2="10" y2="17" />
+      <line x1="14" y1="11" x2="14" y2="17" />
     </svg>
   ),
-  Edit: () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+  Edit: ({ className = "w-4 h-4" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
     </svg>
   ),
-  Download: () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+  Download: ({ className = "w-4 h-4" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
     </svg>
   ),
-  Upload: () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+  Upload: ({ className = "w-4 h-4" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="17 8 12 3 7 8" />
+      <line x1="12" y1="3" x2="12" y2="15" />
     </svg>
   ),
-  Refresh: () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+  Refresh: ({ className = "w-4 h-4" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+      <polyline points="21 3 21 8 16 8" />
     </svg>
   ),
-  Home: () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+  Home: ({ className = "w-4 h-4" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <polyline points="9 22 9 12 15 12 15 22" />
     </svg>
   ),
-  Copy: () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+  Copy: ({ className = "w-4 h-4" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
     </svg>
   ),
-  Cut: () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" />
+  Cut: ({ className = "w-4 h-4" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="6" cy="6" r="3" />
+      <circle cx="6" cy="18" r="3" />
+      <line x1="20" y1="4" x2="8.12" y2="15.88" />
+      <line x1="14.47" y1="14.48" x2="20" y2="20" />
+      <line x1="8.12" y1="8.12" x2="12" y2="12" />
     </svg>
   ),
-  Paste: () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+  Archive: ({ className = "w-4 h-4" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="21 8 21 21 3 21 3 8" />
+      <rect x="1" y="3" width="22" height="5" />
+      <line x1="10" y1="12" x2="14" y2="12" />
     </svg>
   ),
-  Archive: () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+  Extract: ({ className = "w-4 h-4" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 5 17 10" />
+      <line x1="12" y1="5" x2="12" y2="15" />
     </svg>
   ),
-  Extract: () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+  Close: ({ className = "w-4 h-4" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
     </svg>
   ),
-  Close: () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+  Check: ({ className = "w-4 h-4" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12" />
     </svg>
   ),
-  Check: () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+  Save: ({ className = "w-4 h-4" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+      <polyline points="17 21 17 13 7 13 7 21" />
+      <polyline points="7 3 7 8 15 8" />
     </svg>
   ),
-  Save: () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+  Grid: ({ className = "w-4 h-4" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="7" />
+      <rect x="14" y="3" width="7" height="7" />
+      <rect x="14" y="14" width="7" height="7" />
+      <rect x="3" y="14" width="7" height="7" />
     </svg>
   ),
-  Grid: () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+  List: ({ className = "w-4 h-4" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="8" y1="6" x2="21" y2="6" />
+      <line x1="8" y1="12" x2="21" y2="12" />
+      <line x1="8" y1="18" x2="21" y2="18" />
+      <line x1="3" y1="6" x2="3.01" y2="6" />
+      <line x1="3" y1="12" x2="3.01" y2="12" />
+      <line x1="3" y1="18" x2="3.01" y2="18" />
     </svg>
   ),
-  List: () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-    </svg>
-  ),
-  Search: () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+  Search: ({ className = "w-4 h-4" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
     </svg>
   ),
 };
 
-// ============================================================================
-// Utility Functions
-// ============================================================================
-const getFileIcon = (name, isDir) => {
-  if (isDir) return Icons.Folder;
-  const ext = name.split('.').pop()?.toLowerCase();
-  const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
-  const codeExts = ['js', 'jsx', 'ts', 'tsx', 'html', 'css', 'json', 'py', 'php'];
-  const zipExts = ['zip', 'rar', '7z', 'tar', 'gz'];
-  
-  if (imageExts.includes(ext)) return Icons.FileImage;
-  if (codeExts.includes(ext)) return Icons.FileCode;
-  if (zipExts.includes(ext)) return Icons.FileZip;
-  if (['txt', 'md', 'log'].includes(ext)) return Icons.FileText;
-  return Icons.File;
-};
-
-const formatSize = (bytes) => {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-};
-
-const formatDate = (dateStr) => {
-  if (!dateStr) return '-';
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('fr-FR', { 
-    day: '2-digit', 
-    month: '2-digit', 
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-};
-
-const joinPath = (...parts) => parts.filter(Boolean).join('/').replace(/\/+/g, '/');
-
-// ============================================================================
-// Modal Component
-// ============================================================================
-const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
-  if (!isOpen) return null;
-  
-  const sizeClasses = {
-    sm: 'max-w-sm',
-    md: 'max-w-md',
-    lg: 'max-w-2xl',
-    xl: 'max-w-4xl',
-    full: 'max-w-6xl',
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className={`bg-gray-800 rounded-lg shadow-xl w-full ${sizeClasses[size]} mx-4 max-h-[90vh] flex flex-col`}>
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
-          <h3 className="text-lg font-semibold text-white">{title}</h3>
-          <button onClick={onClose} className="p-1 hover:bg-gray-700 rounded">
-            <Icons.Close />
-          </button>
-        </div>
-        <div className="flex-1 overflow-auto p-4">
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ============================================================================
-// Context Menu Component
-// ============================================================================
-const ContextMenu = ({ x, y, items, onClose }) => {
-  useEffect(() => {
-    const handleClick = () => onClose();
-    document.addEventListener('click', handleClick);
-    return () => document.removeEventListener('click', handleClick);
-  }, [onClose]);
-
-  return (
-    <div 
-      className="fixed z-50 bg-gray-800 border border-gray-600 rounded-lg shadow-xl py-1 min-w-[160px]"
-      style={{ left: x, top: y }}
-    >
-      {items.map((item, i) => (
-        item.separator ? (
-          <div key={i} className="border-t border-gray-600 my-1" />
-        ) : (
-          <button
-            key={i}
-            onClick={() => { item.onClick(); onClose(); }}
-            disabled={item.disabled}
-            className="w-full px-3 py-2 text-left text-sm hover:bg-gray-700 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {item.icon && <item.icon />}
-            {item.label}
-          </button>
-        )
-      ))}
-    </div>
-  );
-};
-
-// ============================================================================
-// Breadcrumb Component
-// ============================================================================
-const Breadcrumb = ({ path, onNavigate }) => {
-  const parts = path.split('/').filter(Boolean);
-  
-  return (
-    <div className="flex items-center gap-1 text-sm overflow-x-auto">
-      <button 
-        onClick={() => onNavigate('')}
-        className="p-1 hover:bg-gray-700 rounded flex-shrink-0"
-      >
-        <Icons.Home />
-      </button>
-      {parts.map((part, i) => (
-        <React.Fragment key={i}>
-          <span className="text-gray-500">/</span>
-          <button
-            onClick={() => onNavigate(parts.slice(0, i + 1).join('/'))}
-            className="px-2 py-1 hover:bg-gray-700 rounded truncate max-w-[150px]"
-          >
-            {part}
-          </button>
-        </React.Fragment>
-      ))}
-    </div>
-  );
-};
-
-// ============================================================================
-// Toolbar Component
-// ============================================================================
 const Toolbar = ({ 
   onRefresh, 
   onNewFile, 
@@ -398,443 +301,141 @@ const Toolbar = ({
   onSearchChange,
 }) => {
   return (
-    <div className="flex items-center gap-2 p-2 bg-gray-800 border-b border-gray-700 flex-wrap">
-      <button onClick={onRefresh} className="p-2 hover:bg-gray-700 rounded" title="Actualiser">
-        <Icons.Refresh />
-      </button>
+    <div className="flex items-center gap-2 p-3 bg-gray-900/90 border-b border-gray-800 flex-wrap backdrop-blur-md">
+      <div className="flex items-center gap-1">
+        <button onClick={onRefresh} className="p-2 hover:bg-gray-800 text-gray-400 hover:text-white rounded-md transition-colors" title="Actualiser">
+          <Icons.Refresh className="w-4 h-4" />
+        </button>
+      </div>
       
-      <div className="w-px h-6 bg-gray-600" />
+      <div className="w-px h-6 bg-gray-800 mx-1" />
       
-      <button onClick={onNewFile} className="p-2 hover:bg-gray-700 rounded" title="Nouveau fichier">
-        <Icons.Plus />
-      </button>
-      <button onClick={onNewFolder} className="p-2 hover:bg-gray-700 rounded" title="Nouveau dossier">
-        <Icons.Folder />
-      </button>
-      <button onClick={onUpload} className="p-2 hover:bg-gray-700 rounded" title="Uploader">
-        <Icons.Upload />
-      </button>
+      <div className="flex items-center gap-1">
+        <button onClick={onNewFile} className="p-2 hover:bg-gray-800 text-gray-400 hover:text-white rounded-md transition-colors flex items-center gap-2" title="Nouveau fichier">
+          <Icons.Plus className="w-4 h-4" />
+          <span className="text-xs font-medium hidden lg:inline">Nouveau</span>
+        </button>
+        <button onClick={onNewFolder} className="p-2 hover:bg-gray-800 text-gray-400 hover:text-white rounded-md transition-colors" title="Nouveau dossier">
+          <Icons.Folder className="w-4 h-4" />
+        </button>
+        <button onClick={onUpload} className="p-2 hover:bg-gray-800 text-gray-400 hover:text-white rounded-md transition-colors flex items-center gap-2" title="Uploader">
+          <Icons.Upload className="w-4 h-4" />
+          <span className="text-xs font-medium hidden lg:inline">Importer</span>
+        </button>
+      </div>
       
-      <div className="w-px h-6 bg-gray-600" />
+      <div className="w-px h-6 bg-gray-800 mx-1" />
       
-      <button 
-        onClick={onDelete} 
-        disabled={selectedCount === 0}
-        className="p-2 hover:bg-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed text-red-400" 
-        title="Supprimer"
-      >
-        <Icons.Trash />
-      </button>
-      <button 
-        onClick={onZip} 
-        disabled={selectedCount === 0}
-        className="p-2 hover:bg-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed" 
-        title="Compresser"
-      >
-        <Icons.Archive />
-      </button>
-      <button 
-        onClick={onUnzip} 
-        disabled={selectedCount !== 1}
-        className="p-2 hover:bg-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed" 
-        title="Extraire"
-      >
-        <Icons.Extract />
-      </button>
+      <div className="flex items-center gap-1">
+        <button 
+          onClick={onDelete} 
+          disabled={selectedCount === 0}
+          className="p-2 hover:bg-red-950/30 text-gray-400 hover:text-red-400 rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed" 
+          title="Supprimer"
+        >
+          <Icons.Trash className="w-4 h-4" />
+        </button>
+        <button 
+          onClick={onZip} 
+          disabled={selectedCount === 0}
+          className="p-2 hover:bg-gray-800 text-gray-400 hover:text-white rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed" 
+          title="Compresser"
+        >
+          <Icons.Archive className="w-4 h-4" />
+        </button>
+        <button 
+          onClick={onUnzip} 
+          disabled={selectedCount !== 1}
+          className="p-2 hover:bg-gray-800 text-gray-400 hover:text-white rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed" 
+          title="Extraire"
+        >
+          <Icons.Extract className="w-4 h-4" />
+        </button>
+      </div>
       
       <div className="flex-1" />
       
-      <div className="relative flex items-center space-x-5">
+      <div className="relative flex items-center">
+        <Icons.Search className="absolute left-3 w-3.5 h-3.5 text-gray-500" />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Rechercher..."
-          className="pl-8 pr-3 py-1.5 bg-gray-700 border border-gray-600 rounded text-sm w-48 focus:outline-none focus:border-blue-500"
+          className="pl-9 pr-3 py-1.5 bg-gray-950/50 border border-gray-800 rounded-lg text-xs w-48 lg:w-64 focus:outline-none focus:border-blue-500/50 focus:bg-gray-950 transition-all"
         />
       </div>
       
-      <div className="flex bg-gray-700 rounded">
+      <div className="flex bg-gray-950/50 p-1 rounded-lg border border-gray-800">
         <button 
           onClick={() => onViewModeChange('grid')}
-          className={`p-2 rounded-l ${viewMode === 'grid' ? 'bg-blue-600' : 'hover:bg-gray-600'}`}
+          className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-gray-800 text-blue-400 shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
         >
-          <Icons.Grid />
+          <Icons.Grid className="w-3.5 h-3.5" />
         </button>
         <button 
           onClick={() => onViewModeChange('list')}
-          className={`p-2 rounded-r ${viewMode === 'list' ? 'bg-blue-600' : 'hover:bg-gray-600'}`}
+          className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-gray-800 text-blue-400 shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
         >
-          <Icons.List />
+          <Icons.List className="w-3.5 h-3.5" />
         </button>
       </div>
     </div>
   );
 };
 
-// ============================================================================
-// File Item Component (Grid View)
-// ============================================================================
-const FileItemGrid = ({ item, isSelected, onSelect, onOpen, onContextMenu }) => {
-  const Icon = getFileIcon(item.name, item.isDir);
-  
-  return (
-    <div
-      className={`p-3 rounded-lg cursor-pointer flex flex-col items-center gap-2 transition-colors
-        ${isSelected ? 'bg-blue-600/30 ring-2 ring-blue-500' : 'hover:bg-gray-700'}`}
-      onClick={(e) => onSelect(e)}
-      onDoubleClick={() => onOpen()}
-      onContextMenu={(e) => { e.preventDefault(); onContextMenu(e); }}
-    >
-      <div className={`text-3xl ${item.isDir ? 'text-yellow-400' : 'text-gray-400'}`}>
-        <Icon />
-      </div>
-      <span className="text-sm text-center truncate w-full" title={item.name}>
-        {item.name}
-      </span>
-    </div>
-  );
-};
-
-// ============================================================================
-// File Item Component (List View)
-// ============================================================================
-const FileItemList = ({ item, isSelected, onSelect, onOpen, onContextMenu }) => {
-  const Icon = getFileIcon(item.name, item.isDir);
-  
-  return (
-    <div
-      className={`px-3 py-2 cursor-pointer flex items-center gap-3 transition-colors
-        ${isSelected ? 'bg-blue-600/30' : 'hover:bg-gray-700'}`}
-      onClick={(e) => onSelect(e)}
-      onDoubleClick={() => onOpen()}
-      onContextMenu={(e) => { e.preventDefault(); onContextMenu(e); }}
-    >
-      <div className={`${item.isDir ? 'text-yellow-400' : 'text-gray-400'}`}>
-        <Icon />
-      </div>
-      <span className="flex-1 truncate">{item.name}</span>
-      <span className="text-sm text-gray-500 w-24 text-right">
-        {item.isDir ? '-' : formatSize(item.size || 0)}
-      </span>
-      <span className="text-sm text-gray-500 w-36 text-right">
-        {formatDate(item.mtime)}
-      </span>
-    </div>
-  );
-};
-
-// ============================================================================
-// File Editor Component
-// ============================================================================
-const FileEditor = ({ path, content, onSave, onClose, isNew = false }) => {
-  const [text, setText] = useState(content || '');
-  const [fileName, setFileName] = useState(path.split('/').pop() || 'nouveau-fichier.txt');
-  const [saving, setSaving] = useState(false);
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const finalPath = isNew ? joinPath(path.replace(/[^/]*$/, ''), fileName) : path;
-      await onSave(finalPath, text);
-      if (!isNew) onClose();
-    } finally {
-      setSaving(false);
+const Sidebar = ({ currentPath, onNavigate }) => {
+  const sections = [
+    {
+      title: 'Favoris',
+      items: [
+        { label: 'Accueil', icon: Icons.Home, path: '' },
+        { label: 'Bureau', icon: Icons.Grid, path: 'Desktop' },
+        { label: 'Documents', icon: Icons.Folder, path: 'Documents' },
+        { label: 'Images', icon: Icons.FileImage, path: 'Images' },
+        { label: 'Téléchargements', icon: Icons.Download, path: 'Downloads' },
+      ]
+    },
+    {
+      title: 'Emplacements',
+      items: [
+        { label: 'Ce PC', icon: Icons.Archive, path: 'root' },
+        { label: 'Réseau', icon: Icons.Refresh, path: 'network' },
+      ]
     }
-  };
+  ];
 
   return (
-    <div className="flex flex-col h-full">
-      {isNew && (
-        <div className="mb-3">
-          <label className="block text-sm text-gray-400 mb-1">Nom du fichier</label>
-          <input
-            type="text"
-            value={fileName}
-            onChange={(e) => setFileName(e.target.value)}
-            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-          />
-        </div>
-      )}
-      <textarea
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        className="flex-1 w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded font-mono text-sm resize-none focus:outline-none focus:border-blue-500"
-        style={{ minHeight: '300px' }}
-      />
-      <div className="flex justify-end gap-2 mt-3">
-        <button
-          onClick={onClose}
-          className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded"
-        >
-          Annuler
-        </button>
-        <button
-          onClick={handleSave}
-          disabled={saving || (isNew && !fileName.trim())}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded disabled:opacity-50 flex items-center gap-2"
-        >
-          <Icons.Save />
-          {saving ? 'Enregistrement...' : 'Enregistrer'}
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// ============================================================================
-// Upload Component
-// ============================================================================
-const UploadModal = ({ currentPath, onUpload, onClose }) => {
-  const [files, setFiles] = useState([]);
-  const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState({});
-
-  const handleFileChange = (e) => {
-    setFiles(Array.from(e.target.files));
-  };
-
-  const handleUpload = async () => {
-    setUploading(true);
-    for (const file of files) {
-      setProgress(p => ({ ...p, [file.name]: 0 }));
-      try {
-        await onUpload(
-          joinPath(currentPath, file.name), 
-          file,
-          (percent) => setProgress(p => ({ ...p, [file.name]: percent }))
-        );
-        setProgress(p => ({ ...p, [file.name]: 'done' }));
-      } catch (err) {
-        setProgress(p => ({ ...p, [file.name]: 'error' }));
-      }
-    }
-    setUploading(false);
-    onClose();
-  };
-
-  const getProgressDisplay = (fileProgress) => {
-    if (fileProgress === 'done') return <span className="text-green-400">✓</span>;
-    if (fileProgress === 'error') return <span className="text-red-400">✗</span>;
-    if (typeof fileProgress === 'number') {
-      return <span className="text-blue-400 text-sm">{fileProgress}%</span>;
-    }
-    return null;
-  };
-
-  return (
-    <div>
-      <input
-        type="file"
-        multiple
-        onChange={handleFileChange}
-        className="w-full mb-4"
-      />
-      {files.length > 0 && (
-        <div className="mb-4 max-h-48 overflow-auto">
-          {files.map((file, i) => (
-            <div key={i} className="flex items-center gap-2 py-1">
-              <Icons.File />
-              <span className="flex-1 truncate">{file.name}</span>
-              <span className="text-sm text-gray-500">{formatSize(file.size)}</span>
-              {getProgressDisplay(progress[file.name])}
+    <div className="w-64 bg-gray-900/80 border-r border-gray-800 flex flex-col hidden md:flex backdrop-blur-md">
+      <div className="flex-1 overflow-y-auto pt-4">
+        {sections.map((section, idx) => (
+          <div key={idx} className="mb-6">
+            <div className="px-6 mb-2 text-[10px] font-bold text-gray-500 uppercase tracking-[0.1em]">
+              {section.title}
             </div>
-          ))}
-        </div>
-      )}
-      <div className="flex justify-end gap-2">
-        <button onClick={onClose} className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded">
-          Annuler
-        </button>
-        <button
-          onClick={handleUpload}
-          disabled={files.length === 0 || uploading}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded disabled:opacity-50"
-        >
-          {uploading ? 'Upload en cours...' : 'Uploader'}
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// ============================================================================
-// New Folder Modal
-// ============================================================================
-const NewFolderModal = ({ currentPath, onCreate, onClose }) => {
-  const [name, setName] = useState('');
-  const [creating, setCreating] = useState(false);
-
-  const handleCreate = async () => {
-    if (!name.trim()) return;
-    setCreating(true);
-    try {
-      await onCreate(joinPath(currentPath, name));
-      onClose();
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  return (
-    <div>
-      <label className="block text-sm text-gray-400 mb-1">Nom du dossier</label>
-      <input
-        type="text"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500 mb-4"
-        autoFocus
-      />
-      <div className="flex justify-end gap-2">
-        <button onClick={onClose} className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded">
-          Annuler
-        </button>
-        <button
-          onClick={handleCreate}
-          disabled={!name.trim() || creating}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded disabled:opacity-50"
-        >
-          {creating ? 'Création...' : 'Créer'}
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// ============================================================================
-// Zip Modal
-// ============================================================================
-const ZipModal = ({ selectedItems, currentPath, onZip, onClose }) => {
-  const [zipName, setZipName] = useState('archive.zip');
-  const [zipping, setZipping] = useState(false);
-
-  const handleZip = async () => {
-    if (!zipName.trim()) return;
-    setZipping(true);
-    try {
-      const paths = selectedItems.map(item => joinPath(currentPath, item.name));
-      await onZip(joinPath(currentPath, zipName), paths);
-      onClose();
-    } finally {
-      setZipping(false);
-    }
-  };
-
-  return (
-    <div>
-      <div className="mb-4">
-        <p className="text-sm text-gray-400 mb-2">Fichiers à compresser :</p>
-        <div className="max-h-32 overflow-auto bg-gray-900 rounded p-2">
-          {selectedItems.map((item, i) => (
-            <div key={i} className="text-sm py-0.5">{item.name}</div>
-          ))}
-        </div>
-      </div>
-      <label className="block text-sm text-gray-400 mb-1">Nom de l'archive</label>
-      <input
-        type="text"
-        value={zipName}
-        onChange={(e) => setZipName(e.target.value)}
-        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500 mb-4"
-      />
-      <div className="flex justify-end gap-2">
-        <button onClick={onClose} className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded">
-          Annuler
-        </button>
-        <button
-          onClick={handleZip}
-          disabled={!zipName.trim() || zipping}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded disabled:opacity-50"
-        >
-          {zipping ? 'Compression...' : 'Compresser'}
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// ============================================================================
-// Unzip Modal
-// ============================================================================
-const UnzipModal = ({ selectedItem, currentPath, onUnzip, onClose }) => {
-  const [dest, setDest] = useState(currentPath);
-  const [unzipping, setUnzipping] = useState(false);
-
-  const handleUnzip = async () => {
-    setUnzipping(true);
-    try {
-      await onUnzip(joinPath(currentPath, selectedItem.name), dest);
-      onClose();
-    } finally {
-      setUnzipping(false);
-    }
-  };
-
-  return (
-    <div>
-      <p className="text-sm text-gray-400 mb-2">Fichier : {selectedItem.name}</p>
-      <label className="block text-sm text-gray-400 mb-1">Destination</label>
-      <input
-        type="text"
-        value={dest}
-        onChange={(e) => setDest(e.target.value)}
-        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500 mb-4"
-      />
-      <div className="flex justify-end gap-2">
-        <button onClick={onClose} className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded">
-          Annuler
-        </button>
-        <button
-          onClick={handleUnzip}
-          disabled={unzipping}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded disabled:opacity-50"
-        >
-          {unzipping ? 'Extraction...' : 'Extraire'}
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// ============================================================================
-// Delete Confirmation Modal
-// ============================================================================
-const DeleteModal = ({ selectedItems, onDelete, onClose }) => {
-  const [deleting, setDeleting] = useState(false);
-
-  const handleDelete = async () => {
-    setDeleting(true);
-    try {
-      await onDelete();
-      onClose();
-    } finally {
-      setDeleting(false);
-    }
-  };
-
-  return (
-    <div>
-      <p className="mb-4">
-        Êtes-vous sûr de vouloir supprimer {selectedItems.length} élément(s) ?
-      </p>
-      <div className="max-h-32 overflow-auto bg-gray-900 rounded p-2 mb-4">
-        {selectedItems.map((item, i) => (
-          <div key={i} className="text-sm py-0.5 text-red-400">{item.name}</div>
+            <nav className="px-3 space-y-0.5">
+              {section.items.map((item, i) => (
+                <button
+                  key={i}
+                  onClick={() => onNavigate(item.path)}
+                  className={`w-full flex items-center gap-3 px-3 py-1.5 rounded-md text-sm transition-all duration-200 group
+                    ${currentPath === item.path 
+                      ? 'bg-blue-600/20 text-blue-400 shadow-[inset_0_0_0_1px_rgba(59,130,246,0.2)]' 
+                      : 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-200'}`}
+                >
+                  <item.icon className={`w-4 h-4 transition-colors ${currentPath === item.path ? 'text-blue-400' : 'text-gray-500 group-hover:text-gray-300'}`} />
+                  <span className="font-medium">{item.label}</span>
+                </button>
+              ))}
+            </nav>
+          </div>
         ))}
       </div>
-      <div className="flex justify-end gap-2">
-        <button onClick={onClose} className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded">
-          Annuler
-        </button>
-        <button
-          onClick={handleDelete}
-          disabled={deleting}
-          className="px-4 py-2 bg-red-600 hover:bg-red-500 rounded disabled:opacity-50"
-        >
-          {deleting ? 'Suppression...' : 'Supprimer'}
-        </button>
+      <div className="p-4 border-t border-gray-800 bg-gray-900/40 font-mono tracking-tighter">
+        <div className="flex items-center gap-3 px-3 py-2 text-[11px] font-medium text-gray-500">
+          <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)] animate-pulse" />
+          <span className="uppercase tracking-wider">Serveur Connecté</span>
+        </div>
       </div>
     </div>
   );
@@ -999,74 +600,113 @@ const FileManager = ({ baseUrl = '', className = '' }) => {
   }
 
   return (
-    <div className={`flex flex-col h-full bg-gray-900 text-white ${className}`}>
-      <Toolbar
-        onRefresh={() => loadDirectory(currentPath)}
-        onNewFile={() => setModal({ type: 'newFile', data: { path: currentPath } })}
-        onNewFolder={() => setModal({ type: 'newFolder' })}
-        onUpload={() => setModal({ type: 'upload' })}
-        onDelete={() => setModal({ type: 'delete' })}
-        onZip={() => setModal({ type: 'zip' })}
-        onUnzip={() => selectedItems[0] && setModal({ type: 'unzip', data: selectedItems[0] })}
-        selectedCount={selected.size}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-      />
+    <div className={`flex h-full bg-black text-white ${className}`}>
+      <Sidebar currentPath={currentPath} onNavigate={loadDirectory} />
+      
+      <div className="flex-1 flex flex-col min-w-0 bg-gray-900/30">
+        <Toolbar
+          onRefresh={() => loadDirectory(currentPath)}
+          onNewFile={() => setModal({ type: 'newFile', data: { path: currentPath } })}
+          onNewFolder={() => setModal({ type: 'newFolder' })}
+          onUpload={() => setModal({ type: 'upload' })}
+          onDelete={() => setModal({ type: 'delete' })}
+          onZip={() => setModal({ type: 'zip' })}
+          onUnzip={() => selectedItems[0] && setModal({ type: 'unzip', data: selectedItems[0] })}
+          selectedCount={selected.size}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+        />
 
-      <div className="px-3 py-2 bg-gray-800/50 border-b border-gray-700">
-        <Breadcrumb path={currentPath} onNavigate={loadDirectory} />
-      </div>
-
-      {error && (
-        <div className="px-3 py-2 bg-red-900/50 text-red-300 text-sm">
-          {error}
+        <div className="px-4 py-2 bg-gray-900/50 border-b border-gray-800 flex items-center gap-4">
+          <div className="flex gap-1">
+            <button 
+              onClick={() => {
+                const parent = currentPath.split('/').slice(0, -1).join('/');
+                loadDirectory(parent);
+              }}
+              disabled={!currentPath}
+              className="p-1.5 hover:bg-gray-800 rounded-md disabled:opacity-30"
+            >
+              <Icons.ChevronDown className="rotate-90" />
+            </button>
+          </div>
+          <div className="flex-1 min-w-0">
+            <Breadcrumb path={currentPath} onNavigate={loadDirectory} />
+          </div>
         </div>
-      )}
 
-      <div className="flex-1 overflow-auto p-2">
-        {loading ? (
-          <div className="flex items-center justify-center h-32 text-gray-500">
-            Chargement...
-          </div>
-        ) : filteredItems.length === 0 ? (
-          <div className="flex items-center justify-center h-32 text-gray-500">
-            {searchQuery ? 'Aucun résultat' : 'Dossier vide'}
-          </div>
-        ) : viewMode === 'grid' ? (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-2">
-            {filteredItems.map(item => (
-              <FileItemGrid
-                key={item.name}
-                item={item}
-                isSelected={selected.has(item.name)}
-                onSelect={(e) => handleSelect(item, e)}
-                onOpen={() => handleOpen(item)}
-                onContextMenu={(e) => handleContextMenu(item, e)}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="divide-y divide-gray-800">
-            {filteredItems.map(item => (
-              <FileItemList
-                key={item.name}
-                item={item}
-                isSelected={selected.has(item.name)}
-                onSelect={(e) => handleSelect(item, e)}
-                onOpen={() => handleOpen(item)}
-                onContextMenu={(e) => handleContextMenu(item, e)}
-              />
-            ))}
+        {error && (
+          <div className="mx-4 my-2 px-3 py-2 bg-red-900/20 border border-red-900/50 text-red-400 text-sm rounded-md">
+            {error}
           </div>
         )}
-      </div>
 
-      <div className="px-3 py-1.5 bg-gray-800 border-t border-gray-700 text-xs text-gray-500">
-        {filteredItems.length} élément(s) • {selected.size} sélectionné(s)
-      </div>
+        <div className="flex-1 overflow-auto">
+          {loading ? (
+            <div className="flex items-center justify-center h-full text-gray-500">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                <span className="text-sm font-medium">Chargement des fichiers...</span>
+              </div>
+            </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="flex flex-center justify-center h-full text-gray-500">
+              <div className="flex flex-col items-center gap-3">
+                <Icons.Folder className="w-12 h-12 opacity-20" />
+                <span className="text-sm font-medium">
+                  {searchQuery ? 'Aucun résultat trouvé' : 'Ce dossier est vide'}
+                </span>
+              </div>
+            </div>
+          ) : viewMode === 'grid' ? (
+            <div className="p-4 grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] gap-4">
+              {filteredItems.map(item => (
+                <FileItemGrid
+                  key={item.name}
+                  item={item}
+                  isSelected={selected.has(item.name)}
+                  onSelect={(e) => handleSelect(item, e)}
+                  onOpen={() => handleOpen(item)}
+                  onContextMenu={(e) => handleContextMenu(item, e)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col">
+              <div className="flex items-center px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-800 sticky top-0 bg-gray-900/90 backdrop-blur-sm z-10">
+                <div className="flex-1">Nom</div>
+                <div className="w-24 text-right">Taille</div>
+                <div className="w-36 text-right">Modifié</div>
+              </div>
+              <div className="divide-y divide-gray-800/50">
+                {filteredItems.map(item => (
+                  <FileItemList
+                    key={item.name}
+                    item={item}
+                    isSelected={selected.has(item.name)}
+                    onSelect={(e) => handleSelect(item, e)}
+                    onOpen={() => handleOpen(item)}
+                    onContextMenu={(e) => handleContextMenu(item, e)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
 
+        <div className="px-4 py-2 bg-gray-900/80 border-t border-gray-800 text-[11px] text-gray-500 flex justify-between items-center">
+          <div>
+            {filteredItems.length} élément(s) 
+            {selected.size > 0 && <span className="ml-2 font-medium text-blue-400">• {selected.size} sélectionné(s)</span>}
+          </div>
+          <div className="flex items-center gap-3">
+            <span>{baseUrl}</span>
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+          </div>
+        </div>
+      </div>
       {contextMenu && (
         <ContextMenu
           x={contextMenu.x}
