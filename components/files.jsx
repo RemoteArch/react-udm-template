@@ -1298,6 +1298,44 @@ const FileManagers = () => {
     }
   };
 
+  // --- Import/Export ---
+  const exportSources = () => {
+    const data = JSON.stringify(sources, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'file-manager-sources.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importSources = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const imported = JSON.parse(event.target.result);
+        if (!Array.isArray(imported)) return;
+        const valid = imported
+          .filter((s) => s && typeof s === 'object' && typeof s.url === 'string' && s.url.trim())
+          .map((s, i) => ({
+            name: (typeof s.name === 'string' && s.name.trim()) ? s.name.trim() : `Source ${i + 1}`,
+            url: s.url.trim(),
+          }))
+          .filter((s) => !sources.some((existing) => existing.url === s.url));
+        if (valid.length > 0) {
+          setSources([...sources, ...valid]);
+        }
+      } catch {
+        // Invalid JSON
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   return (
     <div className="flex flex-col h-full bg-[#0F1117] text-slate-300 font-sans">
       
@@ -1367,6 +1405,30 @@ const FileManagers = () => {
         >
           <Icons.Download size={18} />
         </a>
+
+        {/* Bouton Exporter les sources */}
+        <button
+          onClick={exportSources}
+          disabled={sources.length === 0}
+          className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/10 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+          title="Exporter les sources (JSON)"
+        >
+          <Icons.Upload size={18} />
+        </button>
+
+        {/* Bouton Importer les sources */}
+        <label
+          className="ml-2 p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/10 transition-all active:scale-95 cursor-pointer"
+          title="Importer des sources (JSON)"
+        >
+          <Icons.Download size={18} />
+          <input
+            type="file"
+            accept=".json,application/json"
+            onChange={importSources}
+            className="hidden"
+          />
+        </label>
       </div>
 
       {/* --- ZONE DE CONTENU --- */}
