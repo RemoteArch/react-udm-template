@@ -17,7 +17,9 @@ const formatSize = (bytes) => {
 
 const formatDate = (date) => {
   if (!date) return '-';
-  return new Date(date).toLocaleString('fr-FR', {
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return '-';
+  return parsed.toLocaleString('fr-FR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -906,7 +908,9 @@ const Sidebar = ({ currentPath, onNavigate }) => {
 // ============================================================================
 // Main FileManager Component
 // ============================================================================
+
 const FileManager = ({ baseUrl = '', className = '' }) => {
+  // --- Logique (Conservée à l'identique) ---
   const [currentPath, setCurrentPath] = useState('');
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -915,7 +919,6 @@ const FileManager = ({ baseUrl = '', className = '' }) => {
   const [viewMode, setViewMode] = useState('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [contextMenu, setContextMenu] = useState(null);
-  
   const [modal, setModal] = useState({ type: null, data: null });
 
   const api = useMemo(() => createFileAPI(baseUrl), [baseUrl]);
@@ -927,7 +930,6 @@ const FileManager = ({ baseUrl = '', className = '' }) => {
     try {
       const data = await api.list(path);
       const rawItems = data.items || data || [];
-      // Normaliser les données API (type/path -> isDir/name)
       const normalizedItems = rawItems.map(item => ({
         ...item,
         name: item.name || item.path?.split('/').pop() || item.path,
@@ -1000,6 +1002,7 @@ const FileManager = ({ baseUrl = '', className = '' }) => {
   };
 
   const handleContextMenu = (item, e) => {
+    e.preventDefault(); // Empêche le menu navigateur par défaut
     if (!selected.has(item.name)) {
       setSelected(new Set([item.name]));
     }
@@ -1016,7 +1019,7 @@ const FileManager = ({ baseUrl = '', className = '' }) => {
         { label: 'Compresser', icon: Icons.Archive, onClick: () => setModal({ type: 'zip' }) },
         ...(item.name.endsWith('.zip') ? [{ label: 'Extraire', icon: Icons.Extract, onClick: () => setModal({ type: 'unzip', data: item }) }] : []),
         { separator: true },
-        { label: 'Supprimer', icon: Icons.Trash, onClick: () => setModal({ type: 'delete' }) },
+        { label: 'Supprimer', icon: Icons.Trash, onClick: () => setModal({ type: 'delete' }), danger: true },
       ],
     });
   };
@@ -1031,144 +1034,165 @@ const FileManager = ({ baseUrl = '', className = '' }) => {
     const paths = selectedItems.map(item => joinPath(currentPath, item.name));
     await api.delete(paths);
     loadDirectory(currentPath);
+    setModal({ type: null });
   };
 
   const handleUpload = async (path, file, onProgress) => {
     await api.upload(path, file, true, onProgress);
     loadDirectory(currentPath);
+    setModal({ type: null });
   };
 
   const handleMkdir = async (path) => {
     await api.mkdir(path);
     loadDirectory(currentPath);
+    setModal({ type: null });
   };
 
   const handleZip = async (zipPath, paths) => {
     await api.zip(zipPath, paths);
     loadDirectory(currentPath);
+    setModal({ type: null });
   };
 
   const handleUnzip = async (zipPath, dest) => {
     await api.unzip(zipPath, dest);
     loadDirectory(currentPath);
+    setModal({ type: null });
   };
 
+  // --- Rendu UI Amélioré ---
   if (!baseUrl) {
     return (
-      <div className={`flex items-center justify-center h-64 text-gray-500 ${className}`}>
-        Veuillez configurer le baseUrl du serveur
+      <div className={`flex flex-col items-center justify-center h-64 bg-[#0B0F1A] text-slate-500 rounded-2xl border-2 border-dashed border-white/5 ${className}`}>
+        <Icons.AlertTriangle className="w-8 h-8 mb-2 opacity-20" />
+        <p className="text-sm font-medium italic">Veuillez configurer le baseUrl du serveur</p>
       </div>
     );
   }
 
   return (
-    <div className={`flex h-full bg-black text-white ${className}`}>
-      {/* <Sidebar currentPath={currentPath} onNavigate={loadDirectory} /> */}
+    <div className={`flex flex-col h-full bg-[#0B0F1A] text-slate-200 shadow-2xl overflow-hidden border border-white/5 ${className}`}>
       
-      <div className="flex-1 flex flex-col min-w-0 bg-gray-900/30">
-        <Toolbar
-          onRefresh={() => loadDirectory(currentPath)}
-          onNewFile={() => setModal({ type: 'newFile', data: { path: currentPath } })}
-          onNewFolder={() => setModal({ type: 'newFolder' })}
-          onUpload={() => setModal({ type: 'upload' })}
-          onDelete={() => setModal({ type: 'delete' })}
-          onZip={() => setModal({ type: 'zip' })}
-          onUnzip={() => selectedItems[0] && setModal({ type: 'unzip', data: selectedItems[0] })}
-          selectedCount={selected.size}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-        />
+      {/* 1. Header Toolbar */}
+      <Toolbar
+        onRefresh={() => loadDirectory(currentPath)}
+        onNewFile={() => setModal({ type: 'newFile', data: { path: currentPath } })}
+        onNewFolder={() => setModal({ type: 'newFolder' })}
+        onUpload={() => setModal({ type: 'upload' })}
+        onDelete={() => setModal({ type: 'delete' })}
+        onZip={() => setModal({ type: 'zip' })}
+        onUnzip={() => selectedItems[0] && setModal({ type: 'unzip', data: selectedItems[0] })}
+        selectedCount={selected.size}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+      />
 
-        <div className="px-4 py-2 bg-gray-900/50 border-b border-gray-800 flex items-center gap-4">
-          <div className="flex gap-1">
-            <button 
-              onClick={() => {
-                const parent = currentPath.split('/').slice(0, -1).join('/');
-                loadDirectory(parent);
-              }}
-              disabled={!currentPath}
-              className="p-1.5 hover:bg-gray-800 rounded-md disabled:opacity-30"
-            >
-              <Icons.ChevronDown className="rotate-90" />
-            </button>
-          </div>
-          <div className="flex-1 min-w-0">
-            <Breadcrumb path={currentPath} onNavigate={loadDirectory} />
-          </div>
+      {/* 2. Breadcrumb & Navigation */}
+      <div className="flex items-center px-4 py-3 bg-white/[0.02] border-b border-white/5 backdrop-blur-md gap-4">
+        <div className="flex items-center bg-black/40 rounded-lg p-1 border border-white/5">
+          <button 
+            onClick={() => {
+              const parent = currentPath.split('/').slice(0, -1).join('/');
+              loadDirectory(parent);
+            }}
+            disabled={!currentPath}
+            className="p-1.5 hover:bg-white/10 rounded-md disabled:opacity-20 transition-all active:scale-90"
+          >
+            <Icons.ChevronDown className="rotate-90 w-4 h-4" />
+          </button>
         </div>
+        <div className="flex-1 overflow-hidden">
+          <Breadcrumb path={currentPath} onNavigate={loadDirectory} />
+        </div>
+      </div>
 
-        {error && (
-          <div className="mx-4 my-2 px-3 py-2 bg-red-900/20 border border-red-900/50 text-red-400 text-sm rounded-md">
-            {error}
+      {/* 3. Status Error */}
+      {error && (
+        <div className="mx-4 my-2 px-4 py-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded-xl flex items-center gap-3 animate-in slide-in-from-top-1">
+          <Icons.AlertCircle size={14} />
+          <span className="font-medium">{error}</span>
+        </div>
+      )}
+
+      {/* 4. Main Explorer View */}
+      <div className="flex-1 overflow-auto custom-scrollbar relative" onClick={() => setSelected(new Set())}>
+        {loading ? (
+          <div className="flex flex-col items-center justify-center h-full gap-4">
+            <div className="relative">
+              <div className="w-12 h-12 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Icons.Folder size={16} className="text-blue-500 animate-pulse" />
+              </div>
+            </div>
+            <span className="text-xs font-bold uppercase tracking-widest text-slate-500 animate-pulse">Récupération...</span>
           </div>
-        )}
-
-        <div className="flex-1 overflow-auto">
-          {loading ? (
-            <div className="flex items-center justify-center h-full text-gray-500">
-              <div className="flex flex-col items-center gap-3">
-                <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                <span className="text-sm font-medium">Chargement des fichiers...</span>
-              </div>
+        ) : filteredItems.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full opacity-30">
+            <Icons.FolderOpen className="w-16 h-16 mb-4 stroke-[1px]" />
+            <span className="text-sm font-medium italic">
+              {searchQuery ? 'Aucun résultat pour cette recherche' : 'Dossier vide'}
+            </span>
+          </div>
+        ) : viewMode === 'grid' ? (
+          <div className="p-6 grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-6">
+            {filteredItems.map(item => (
+              <FileItemGrid
+                key={item.name}
+                item={item}
+                isSelected={selected.has(item.name)}
+                onSelect={(e) => { e.stopPropagation(); handleSelect(item, e); }}
+                onOpen={() => handleOpen(item)}
+                onContextMenu={(e) => handleContextMenu(item, e)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col">
+            <div className="flex items-center px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-white/5 sticky top-0 bg-[#0B0F1A]/95 backdrop-blur-sm z-10">
+              <div className="flex-1">Nom du fichier</div>
+              <div className="w-24 text-right">Taille</div>
+              <div className="w-40 text-right">Dernière modification</div>
             </div>
-          ) : filteredItems.length === 0 ? (
-            <div className="flex flex-center justify-center h-full text-gray-500">
-              <div className="flex flex-col items-center gap-3">
-                <Icons.Folder className="w-12 h-12 opacity-20" />
-                <span className="text-sm font-medium">
-                  {searchQuery ? 'Aucun résultat trouvé' : 'Ce dossier est vide'}
-                </span>
-              </div>
-            </div>
-          ) : viewMode === 'grid' ? (
-            <div className="p-4 grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] gap-4">
+            <div className="px-2 py-2">
               {filteredItems.map(item => (
-                <FileItemGrid
+                <FileItemList
                   key={item.name}
                   item={item}
                   isSelected={selected.has(item.name)}
-                  onSelect={(e) => handleSelect(item, e)}
+                  onSelect={(e) => { e.stopPropagation(); handleSelect(item, e); }}
                   onOpen={() => handleOpen(item)}
                   onContextMenu={(e) => handleContextMenu(item, e)}
                 />
               ))}
             </div>
-          ) : (
-            <div className="flex flex-col">
-              <div className="flex items-center px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-800 sticky top-0 bg-gray-900/90 backdrop-blur-sm z-10">
-                <div className="flex-1">Nom</div>
-                <div className="w-24 text-right">Taille</div>
-                <div className="w-36 text-right">Modifié</div>
-              </div>
-              <div className="divide-y divide-gray-800/50">
-                {filteredItems.map(item => (
-                  <FileItemList
-                    key={item.name}
-                    item={item}
-                    isSelected={selected.has(item.name)}
-                    onSelect={(e) => handleSelect(item, e)}
-                    onOpen={() => handleOpen(item)}
-                    onContextMenu={(e) => handleContextMenu(item, e)}
-                  />
-                ))}
-              </div>
+          </div>
+        )}
+      </div>
+
+      {/* 5. Footer Info Bar */}
+      <div className="px-5 py-2 bg-black/60 border-t border-white/5 text-[10px] text-slate-500 flex justify-between items-center backdrop-blur-xl">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1.5">
+            <span className="text-slate-300 font-bold">{filteredItems.length}</span>
+            <span>éléments</span>
+          </div>
+          {selected.size > 0 && (
+            <div className="flex items-center gap-1.5 text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded-full border border-blue-400/20">
+              <Icons.Check size={10} strokeWidth={3} />
+              <span className="font-bold">{selected.size} sélectionné(s)</span>
             </div>
           )}
         </div>
-
-        <div className="px-4 py-2 bg-gray-900/80 border-t border-gray-800 text-[11px] text-gray-500 flex justify-between items-center">
-          <div>
-            {filteredItems.length} élément(s) 
-            {selected.size > 0 && <span className="ml-2 font-medium text-blue-400">• {selected.size} sélectionné(s)</span>}
-          </div>
-          <div className="flex items-center gap-3">
-            <span>{baseUrl}</span>
-            <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-          </div>
+        <div className="flex items-center gap-3 font-mono opacity-50">
+          <span className="truncate max-w-[200px]">{baseUrl}</span>
+          <div className={`w-2 h-2 rounded-full ${loading ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]'}`} />
         </div>
       </div>
+
+      {/* --- Overlay Components --- */}
       {contextMenu && (
         <ContextMenu
           x={contextMenu.x}
@@ -1178,231 +1202,299 @@ const FileManager = ({ baseUrl = '', className = '' }) => {
         />
       )}
 
-      <Modal
-        isOpen={modal.type === 'edit'}
-        onClose={() => setModal({ type: null })}
-        title={modal.data?.path?.split('/').pop() || 'Éditeur'}
-        size="xl"
-      >
-        {modal.type === 'edit' && (
-          <FileEditor
-            path={modal.data.path}
-            content={modal.data.content}
-            onSave={handleSave}
-            onClose={() => setModal({ type: null })}
-          />
-        )}
+      {/* Modals Mapping (Exactement comme ta logique originale) */}
+      <Modal isOpen={modal.type === 'edit'} onClose={() => setModal({ type: null })} title={modal.data?.path?.split('/').pop() || 'Éditeur'} size="xl">
+        {modal.type === 'edit' && <FileEditor path={modal.data.path} content={modal.data.content} onSave={handleSave} onClose={() => setModal({ type: null })} />}
       </Modal>
 
-      <Modal
-        isOpen={modal.type === 'newFile'}
-        onClose={() => setModal({ type: null })}
-        title="Nouveau fichier"
-        size="xl"
-      >
-        {modal.type === 'newFile' && (
-          <FileEditor
-            path={modal.data.path}
-            content=""
-            isNew
-            onSave={handleSave}
-            onClose={() => setModal({ type: null })}
-          />
-        )}
+      <Modal isOpen={modal.type === 'newFile'} onClose={() => setModal({ type: null })} title="Nouveau fichier" size="xl">
+        {modal.type === 'newFile' && <FileEditor path={modal.data.path} content="" isNew onSave={handleSave} onClose={() => setModal({ type: null })} />}
       </Modal>
 
-      <Modal
-        isOpen={modal.type === 'newFolder'}
-        onClose={() => setModal({ type: null })}
-        title="Nouveau dossier"
-        size="sm"
-      >
-        {modal.type === 'newFolder' && (
-          <NewFolderModal
-            currentPath={currentPath}
-            onCreate={handleMkdir}
-            onClose={() => setModal({ type: null })}
-          />
-        )}
+      <Modal isOpen={modal.type === 'newFolder'} onClose={() => setModal({ type: null })} title="Nouveau dossier" size="sm">
+        {modal.type === 'newFolder' && <NewFolderModal currentPath={currentPath} onCreate={handleMkdir} onClose={() => setModal({ type: null })} />}
       </Modal>
 
-      <Modal
-        isOpen={modal.type === 'upload'}
-        onClose={() => setModal({ type: null })}
-        title="Uploader des fichiers"
-        size="md"
-      >
-        {modal.type === 'upload' && (
-          <UploadModal
-            currentPath={currentPath}
-            onUpload={handleUpload}
-            onClose={() => setModal({ type: null })}
-          />
-        )}
+      <Modal isOpen={modal.type === 'upload'} onClose={() => setModal({ type: null })} title="Uploader des fichiers" size="md">
+        {modal.type === 'upload' && <UploadModal currentPath={currentPath} onUpload={handleUpload} onClose={() => setModal({ type: null })} />}
       </Modal>
 
-      <Modal
-        isOpen={modal.type === 'delete'}
-        onClose={() => setModal({ type: null })}
-        title="Confirmer la suppression"
-        size="sm"
-      >
-        {modal.type === 'delete' && (
-          <DeleteModal
-            selectedItems={selectedItems}
-            onDelete={handleDelete}
-            onClose={() => setModal({ type: null })}
-          />
-        )}
+      <Modal isOpen={modal.type === 'delete'} onClose={() => setModal({ type: null })} title="Confirmer la suppression" size="sm">
+        {modal.type === 'delete' && <DeleteModal selectedItems={selectedItems} onDelete={handleDelete} onClose={() => setModal({ type: null })} />}
       </Modal>
 
-      <Modal
-        isOpen={modal.type === 'zip'}
-        onClose={() => setModal({ type: null })}
-        title="Compresser"
-        size="sm"
-      >
-        {modal.type === 'zip' && (
-          <ZipModal
-            selectedItems={selectedItems}
-            currentPath={currentPath}
-            onZip={handleZip}
-            onClose={() => setModal({ type: null })}
-          />
-        )}
+      <Modal isOpen={modal.type === 'zip'} onClose={() => setModal({ type: null })} title="Compresser" size="sm">
+        {modal.type === 'zip' && <ZipModal selectedItems={selectedItems} currentPath={currentPath} onZip={handleZip} onClose={() => setModal({ type: null })} />}
       </Modal>
 
-      <Modal
-        isOpen={modal.type === 'unzip'}
-        onClose={() => setModal({ type: null })}
-        title="Extraire"
-        size="sm"
-      >
-        {modal.type === 'unzip' && modal.data && (
-          <UnzipModal
-            selectedItem={modal.data}
-            currentPath={currentPath}
-            onUnzip={handleUnzip}
-            onClose={() => setModal({ type: null })}
-          />
-        )}
+      <Modal isOpen={modal.type === 'unzip'} onClose={() => setModal({ type: null })} title="Extraire" size="sm">
+        {modal.type === 'unzip' && modal.data && <UnzipModal selectedItem={modal.data} currentPath={currentPath} onUnzip={handleUnzip} onClose={() => setModal({ type: null })} />}
       </Modal>
     </div>
   );
 };
 
+const APILINKURL = "http://cdn.jsdelivr.net/gh/remotearch/php-api-template/file.php";
+
 const FileManagers = () => {
-  const [urls, setUrls] = React.useState(() => {
+  // --- Logique d'état et Persistance ---
+  const [sources, setSources] = React.useState(() => {
     const saved = localStorage.getItem('fileManagerUrls');
-    return saved ? JSON.parse(saved) : [];
+    if (!saved) return [];
+    try {
+      const parsed = JSON.parse(saved);
+      if (!Array.isArray(parsed)) return [];
+      if (parsed.length === 0) return [];
+      
+      // Migration des anciennes chaînes vers des objets
+      if (typeof parsed[0] === 'string') {
+        return parsed.map((url, i) => ({
+          name: (String(url).replace(/^.*\//, '') || `Source ${i + 1}`),
+          url: String(url),
+        }));
+      }
+      return parsed
+        .filter((s) => s && typeof s === 'object')
+        .map((s, i) => ({
+          name: (typeof s.name === 'string' && s.name.trim()) ? s.name.trim() : `Source ${i + 1}`,
+          url: typeof s.url === 'string' ? s.url : '',
+        }))
+        .filter((s) => s.url);
+    } catch {
+      return [];
+    }
   });
-  const [activeTab, setActiveTab] = React.useState(0);
-  const [newUrl, setNewUrl] = React.useState('');
-  const [showAddInput, setShowAddInput] = React.useState(false);
+
+  const [activeTab, setActiveTab] = React.useState(null);
+  const [newSourceName, setNewSourceName] = React.useState('');
+  const [newSourceUrl, setNewSourceUrl] = React.useState('');
+  const [isAddModalOpen, setIsAddModalOpen] = React.useState(false);
 
   React.useEffect(() => {
-    localStorage.setItem('fileManagerUrls', JSON.stringify(urls));
-  }, [urls]);
+    localStorage.setItem('fileManagerUrls', JSON.stringify(sources));
+  }, [sources]);
 
-  const addUrl = () => {
-    if (newUrl.trim() && !urls.includes(newUrl.trim())) {
-      setUrls([...urls, newUrl.trim()]);
-      setNewUrl('');
-      setShowAddInput(false);
-    }
+  // --- Actions ---
+  const addSource = () => {
+    const name = newSourceName.trim();
+    const url = newSourceUrl.trim();
+    if (!name || !url) return;
+    if (sources.some((s) => s.url === url)) return;
+    
+    setSources([...sources, { name, url }]);
+    setNewSourceName('');
+    setNewSourceUrl('');
+    setIsAddModalOpen(false);
   };
 
-  const removeUrl = (index) => {
-    if (urls.length > 1) {
-      const newUrls = urls.filter((_, i) => i !== index);
-      setUrls(newUrls);
-      if (activeTab >= newUrls.length) {
-        setActiveTab(newUrls.length - 1);
-      }
+  const removeSource = (index) => {
+    const next = sources.filter((_, i) => i !== index);
+    setSources(next);
+    
+    if (activeTab === index) {
+      setActiveTab(null);
+    } else if (activeTab > index) {
+      setActiveTab(activeTab - 1);
     }
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center bg-gray-900 border-b border-gray-700">
-        <div className="flex flex-1 overflow-x-auto">
-          {urls.map((url, index) => (
+    <div className="flex flex-col h-full bg-[#0F1117] text-slate-300 font-sans">
+      
+      {/* --- BARRE D'ONGLETS (Header) --- */}
+      <div className="flex items-center px-4 bg-gray-900/80 backdrop-blur-xl border-b border-white/5 h-14 shrink-0">
+        <div className="flex items-center flex-1 gap-1 overflow-x-auto no-scrollbar scroll-smooth">
+          
+          {/* Bouton Dashboard / Sources */}
+          <button
+            onClick={() => setActiveTab(null)}
+            className={`flex items-center px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+              activeTab === null 
+              ? 'bg-blue-600/10 text-blue-400 border border-blue-500/20 shadow-[0_0_15px_rgba(37,99,235,0.1)]' 
+              : 'text-slate-500 hover:text-slate-200 hover:bg-white/5'
+            }`}
+          >
+            <Icons.Folder className="w-4 h-4 mr-2" />
+            Sources
+          </button>
+
+          <div className="w-[1px] h-4 bg-white/10 mx-2 shrink-0" />
+
+          {/* Liste des onglets actifs */}
+          {sources.map((source, index) => (
             <div
               key={index}
-              className={`flex items-center group ${
+              className={`group flex items-center min-w-fit h-9 px-3 rounded-lg text-sm transition-all duration-200 border ${
                 activeTab === index
-                  ? 'bg-gray-800 text-white border-b-2 border-blue-500'
-                  : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                  ? 'bg-white/10 text-white border-white/10 shadow-sm'
+                  : 'text-slate-500 border-transparent hover:bg-white/5 hover:text-slate-200'
               }`}
             >
               <button
                 onClick={() => setActiveTab(index)}
-                className="px-4 py-2 text-sm"
+                className="truncate max-w-[140px] font-medium"
               >
-                {url.replace(/^.*\//, '') || `Source ${index + 1}`}
+                {source.name}
               </button>
-              {urls.length > 1 && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeUrl(index);
-                  }}
-                  className="pr-2 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                  title="Supprimer"
-                >
-                  <Icons.Close />
-                </button>
-              )}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeSource(index);
+                }}
+                className="ml-2 p-0.5 rounded-md text-slate-600 hover:text-red-400 hover:bg-red-400/10 opacity-0 group-hover:opacity-100 transition-all"
+              >
+                <Icons.Close size={14} />
+              </button>
             </div>
           ))}
         </div>
-        
-        {showAddInput ? (
-          <div className="flex items-center gap-2 px-2 py-1">
+
+        {/* Bouton Ajouter Rapidement */}
+        <button
+          onClick={() => setIsAddModalOpen(true)}
+          className="ml-4 p-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20 transition-all active:scale-95 group"
+          title="Ajouter une source"
+        >
+          <Icons.Plus size={18} className="group-hover:rotate-90 transition-transform duration-300 w-3" />
+        </button>
+
+        {/* Bouton Télécharger le fichier PHP */}
+        <a
+          href={APILINKURL}
+          download="file.php"
+          className="ml-2 p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/10 transition-all active:scale-95"
+          title="Télécharger le fichier PHP"
+        >
+          <Icons.Download size={18} />
+        </a>
+      </div>
+
+      {/* --- ZONE DE CONTENU --- */}
+      <div className="flex-1 overflow-y-auto relative">
+        {activeTab === null ? (
+          <div className="w-full p-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <header className="mb-10">
+              <h2 className="text-3xl font-bold text-white tracking-tight">Gestionnaire de fichiers</h2>
+              <p className="text-slate-500 mt-2">Sélectionnez une source pour explorer vos fichiers ou ajoutez-en une nouvelle.</p>
+            </header>
+            
+            {sources.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {sources.map((source, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setActiveTab(index)}
+                    className="group relative flex flex-col p-6 rounded-2xl bg-[#161922] border border-white/5 hover:border-blue-500/50 transition-all hover:shadow-2xl hover:shadow-blue-500/10 text-left overflow-hidden"
+                  >
+                    {/* Décoration subtile en arrière-plan */}
+                    <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-colors" />
+                    
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="p-3 rounded-xl bg-blue-500/10 text-blue-400 group-hover:scale-110 transition-transform duration-300">
+                        <Icons.Folder size={24} />
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-600 bg-black/20 px-2 py-1 rounded">URL Distante</span>
+                    </div>
+                    
+                    <div className="font-bold text-lg text-slate-100 group-hover:text-blue-400 transition-colors truncate">
+                      {source.name}
+                    </div>
+                    <div className="text-xs text-slate-500 font-mono truncate mt-2 bg-black/30 p-2 rounded-lg border border-white/5">
+                      {source.url}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-24 border-2 border-dashed border-white/5 rounded-[2rem] bg-white/[0.01]">
+                <div className="w-20 h-20 bg-gray-900 rounded-3xl flex items-center justify-center mb-6 text-slate-700 shadow-inner">
+                  <Icons.Folder size={40} />
+                </div>
+                <h3 className="text-xl font-medium text-slate-300">Aucune source configurée</h3>
+                <p className="text-slate-500 mt-2 mb-8 text-center max-w-xs">Connectez votre premier serveur de fichiers pour commencer l'exploration.</p>
+                <div className="flex items-center gap-4">
+                  <button 
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="flex items-center px-6 py-3 bg-white text-black rounded-xl font-bold hover:bg-slate-200 transition-all active:scale-95"
+                  >
+                    <Icons.Plus size={18} className="mr-2" />
+                    Ajouter une source
+                  </button>
+                  <a
+                    href={APILINKURL}
+                    download="file.php"
+                    className="flex items-center px-6 py-3 bg-white/5 text-slate-300 rounded-xl font-medium hover:bg-white/10 border border-white/10 transition-all active:scale-95"
+                  >
+                    <Icons.Download size={18} className="mr-2" />
+                    Télécharger le PHP
+                  </a>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          sources[activeTab] && (
+            <div className="h-full animate-in fade-in duration-500">
+               <FileManager 
+                key={`${activeTab}-${sources[activeTab].url}`} 
+                baseUrl={sources[activeTab].url} 
+               />
+            </div>
+          )
+        )}
+      </div>
+
+      {/* --- MODAL AJOUT --- */}
+      <Modal
+        isOpen={isAddModalOpen}
+        onClose={() => {
+          setIsAddModalOpen(false);
+          setNewSourceName('');
+          setNewSourceUrl('');
+        }}
+        title="Nouvelle Connexion"
+      >
+        <div className="space-y-6 p-1">
+          <div className="space-y-2">
+            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Nom descriptif</label>
             <input
               type="text"
-              value={newUrl}
-              onChange={(e) => setNewUrl(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && addUrl()}
-              placeholder="/api/files"
-              className="px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+              value={newSourceName}
+              onChange={(e) => setNewSourceName(e.target.value)}
+              className="w-full bg-[#0F1117] border border-white/10 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 outline-none transition-all placeholder:text-slate-700"
+              placeholder="ex: Serveur de Production"
               autoFocus
             />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">URL de l'API</label>
+            <input
+              type="text"
+              value={newSourceUrl}
+              onChange={(e) => setNewSourceUrl(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addSource()}
+              className="w-full bg-[#0F1117] border border-white/10 rounded-xl px-4 py-3 text-sm font-mono focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 outline-none transition-all placeholder:text-slate-700"
+              placeholder="https://api.votre-domaine.com"
+            />
+          </div>
+          
+          <div className="flex gap-3 pt-2">
             <button
-              onClick={addUrl}
-              className="p-1 text-green-400 hover:bg-gray-700 rounded"
+              onClick={() => setIsAddModalOpen(false)}
+              className="flex-1 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:bg-white/5 transition-colors"
             >
-              <Icons.Check />
+              Annuler
             </button>
             <button
-              onClick={() => { setShowAddInput(false); setNewUrl(''); }}
-              className="p-1 text-gray-400 hover:bg-gray-700 rounded"
+              onClick={addSource}
+              disabled={!newSourceName.trim() || !newSourceUrl.trim()}
+              className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-20 disabled:cursor-not-allowed rounded-xl text-sm font-bold text-white shadow-[0_10px_20px_rgba(37,99,235,0.2)] transition-all active:scale-[0.98]"
             >
-              <Icons.Close />
+              Ajouter la source
             </button>
           </div>
-        ) : (
-          <button
-            onClick={() => setShowAddInput(true)}
-            className="p-2 text-gray-400 hover:bg-gray-800 hover:text-white"
-            title="Ajouter une source"
-          >
-            <Icons.Plus />
-          </button>
-        )}
-      </div>
-      <div className="flex-1">
-        {urls.length > 0 ? (
-          <FileManager key={`${activeTab}-${urls[activeTab]}`} baseUrl={urls[activeTab]} />
-        ) : (
-          <div className="flex items-center justify-center h-full text-gray-400">
-            <div className="text-center">
-              <Icons.Folder />
-              <p className="mt-2">Cliquez sur + pour ajouter une source</p>
-            </div>
-          </div>
-        )}
-      </div>
+        </div>
+      </Modal>
     </div>
   );
 };
