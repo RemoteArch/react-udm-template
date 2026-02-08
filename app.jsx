@@ -1,8 +1,11 @@
 const {useState, useEffect} = React;
 
-
-const webApp = document.querySelector('web-app');
-loadTailwind(webApp._shadowRoot);
+if(!window.loadTailwind) {
+  loadTailwind(document , (css)=>{
+    document.adoptedStyleSheets = [new CSSStyleSheet()]
+    document.adoptedStyleSheets[0].replaceSync(css)
+  });
+}
 
 const style = () => {
   return (
