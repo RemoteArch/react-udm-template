@@ -1,6 +1,6 @@
 const {useState, useEffect} = React;
 
-if(!window.loadTailwind) {
+if(window.loadTailwind) {
   loadTailwind(document , (css)=>{
     document.adoptedStyleSheets = [new CSSStyleSheet()]
     document.adoptedStyleSheets[0].replaceSync(css)
