@@ -1,5 +1,21 @@
 const {useState, useEffect} = React;
 
+
+const webApp = document.querySelector('web-app');
+loadTailwind(webApp._shadowRoot);
+
+const style = () => {
+  return (
+    <style type="text/tailwindcss">{`
+      @theme {
+        --color-primary: #0F766E;
+        --color-secondary: #0369A1;
+        --color-tertiary: #F97316;
+      }
+    `}</style>
+  );
+};
+
 function App() {
   const [name, setName] = useState(getComponentNameFromHash());
   const [Component , setComponent] = useState(null);
@@ -40,7 +56,10 @@ function App() {
   }, []);
 
     return (
-      Component ? <Component /> : null
+      <>
+        {style()}
+        {Component ? <Component /> : null}
+      </>
     );
 }
 
