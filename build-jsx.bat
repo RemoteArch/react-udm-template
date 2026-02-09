@@ -5,7 +5,7 @@ REM --- Se placer dans le dossier du .bat ---
 cd /d "%~dp0"
 
 set "SCRIPT=build-jsx.js"
-set "URL=https://cdn.jsdelivr.net/gh/remotearch/react-udm-template/build-jsx.js"
+set "URL=https://cdn.jsdelivr.net/gh/remotearch/react-udm-template@1aacee29d0c2f972d99124162114fd6c9437b676/build-jsx.js"
 
 echo [%DATE% %TIME%] Dossier du bat: %CD%
 
