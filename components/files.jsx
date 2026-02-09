@@ -1038,7 +1038,8 @@ const FileManager = ({ baseUrl = '', className = '' }) => {
   };
 
   const handleUpload = async (path, file, onProgress) => {
-    await api.upload(path, file, true, onProgress);
+    const fullPath = joinPath(path, file.name);
+    await api.upload(fullPath, file, true, onProgress);
     loadDirectory(currentPath);
     setModal({ type: null });
   };
