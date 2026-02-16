@@ -1,84 +1,122 @@
+
 const Home = () => {
+  // Helper pour les icônes SVG pour garder le JSX propre
+  const IconWrapper = ({ children, color = "text-indigo-400" }) => (
+    <div className={`p-2.5 rounded-xl bg-slate-800/50 border border-slate-700/50 ${color} group-hover:scale-110 transition-transform duration-300`}>
+      {children}
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center px-4">
-      <div className="w-full max-w-3xl bg-slate-800/50 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-700/50 overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-primary to-secondary px-8 py-6">
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-100">
-            Bienvenue sur la page d'accueil
-          </h1>
-          <p className="mt-2 text-slate-300 text-sm sm:text-base">
-            Découvrez la structure de votre projet React dynamique avec chargement de composants à la volée.
-          </p>
-        </div>
+    <div className="relative min-h-screen bg-[#020617] flex items-center justify-center px-4 overflow-hidden font-sans selection:bg-indigo-500/30">
+      
+      {/* Background Decor - Mesh Gradients */}
+      <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-indigo-600/10 blur-[120px]" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-fuchsia-600/10 blur-[120px]" />
 
-        {/* Content */}
-        <div className="px-8 py-6 space-y-6 bg-slate-900/80 text-slate-100">
-          <section className="space-y-3">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <span className="inline-block w-1 h-6 rounded-full bg-tertiary" />
-              Navigation par hash
-            </h2>
-            <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-              Utilisez la barre d'adresse pour charger différents composants. Par exemple&nbsp;:
+      <div className="relative w-full max-w-4xl bg-slate-900/60 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] border border-white/5 overflow-hidden">
+        
+        {/* Header - Glassmorphism Card Style */}
+        <div className="relative px-8 pt-12 pb-10 sm:px-16 overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-50" />
+          
+          <div className="relative z-10 flex flex-col items-center text-center space-y-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold uppercase tracking-wider">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+              </span>
+              Système Actif
+            </div>
+            
+            <h1 className="text-4xl sm:text-6xl font-black text-white tracking-tight">
+              Interface <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Dynamique</span>
+            </h1>
+            
+            <p className="max-w-2xl text-slate-400 text-lg leading-relaxed">
+              Explorez une architecture modulaire où chaque composant est injecté intelligemment selon vos besoins.
             </p>
-            <div className="bg-slate-950/50 border border-slate-700/50 rounded-lg p-3 font-mono text-xs sm:text-sm text-tertiary overflow-auto">
-              <p>#Home</p>
-              <p>#MonAutreComposant</p>
-            </div>
-          </section>
-
-          <section className="grid gap-4 sm:grid-cols-3">
-            <div className="bg-slate-800/80 rounded-xl p-4 flex flex-col gap-2 border border-slate-700/50">
-              <h3 className="font-semibold text-sm uppercase tracking-wide text-tertiary">
-                Dynamique
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-300">
-                Les composants sont chargés à la demande via des fichiers JSX séparés.
-              </p>
-            </div>
-            <div className="bg-slate-800/80 rounded-xl p-4 flex flex-col gap-2 border border-slate-700/50">
-              <h3 className="font-semibold text-sm uppercase tracking-wide text-tertiary">
-                Babel &amp; JSX
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-300">
-                Le code JSX est transformé côté client pour permettre un prototypage rapide.
-              </p>
-            </div>
-            <div className="bg-slate-800/80 rounded-xl p-4 flex flex-col gap-2 border border-slate-700/50">
-              <h3 className="font-semibold text-sm uppercase tracking-wide text-tertiary">
-                Sécurité
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-300">
-                Un ErrorBoundary gère proprement les erreurs de chargement des composants.
-              </p>
-            </div>
-          </section>
-
-          <section className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-            <div className="text-xs sm:text-sm text-slate-400">
-              <p>
-                Pour commencer, modifiez le composant <span className="font-mono">Home.jsx</span> ou
-                ajoutez de nouveaux composants dans le dossier <span className="font-mono">components/</span>.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <a
-                href="#Home"
-                className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-primary text-slate-100 text-sm font-semibold shadow-md hover:bg-secondary transition-colors"
-              >
-                Revenir à Home
-              </a>
-              <button
-                type="button"
-                onClick={() => (window.location.hash = '#Demo')}
-                className="inline-flex items-center justify-center px-4 py-2 rounded-lg border border-tertiary/70 text-tertiary text-sm font-semibold hover:bg-tertiary hover:text-slate-900 transition-colors"
-              >
-                Charger #Demo
-              </button>
-            </div>
-          </section>
+          </div>
         </div>
+
+        {/* Main Content Area */}
+        <div className="px-8 pb-12 sm:px-16 space-y-12">
+          
+          {/* Bento Grid Style for Navigation */}
+          <div className="grid md:grid-cols-5 gap-4">
+            <div className="md:col-span-3 bg-slate-950/40 border border-slate-800 rounded-3xl p-6 hover:border-slate-700 transition-colors group">
+              <div className="flex items-center gap-3 mb-4">
+                <IconWrapper>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </IconWrapper>
+                <h2 className="text-xl font-bold text-white">Routage par Hash</h2>
+              </div>
+              <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+                Le changement d'URL déclenche instantanément l'import asynchrone de vos composants JSX.
+              </p>
+              <div className="bg-slate-900/80 rounded-2xl p-4 font-mono text-xs border border-indigo-500/20 shadow-inner">
+                 <div className="flex justify-between items-center text-slate-500 mb-2">
+                    <span>Terminal</span>
+                    <div className="flex gap-1">
+                        <div className="w-2 h-2 rounded-full bg-slate-700" />
+                        <div className="w-2 h-2 rounded-full bg-slate-700" />
+                    </div>
+                 </div>
+                 <span className="text-indigo-400">$</span> window.location.hash = <span className="text-cyan-400">"#MonComposant"</span>
+              </div>
+            </div>
+
+            <div className="md:col-span-2 bg-gradient-to-br from-indigo-600/20 to-transparent border border-indigo-500/20 rounded-3xl p-6 flex flex-col justify-between">
+                <h3 className="text-white font-bold text-lg">Prêt à coder ?</h3>
+                <p className="text-indigo-200/60 text-sm mt-2">
+                    Ajoutez vos fichiers dans <code className="bg-indigo-500/20 px-1.5 py-0.5 rounded text-indigo-300">/components</code> pour les voir apparaître ici.
+                </p>
+                <button 
+                  onClick={() => window.location.hash = '#Demo'}
+                  className="mt-6 w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-bold transition-all shadow-lg shadow-indigo-600/20 active:scale-95 flex items-center justify-center gap-2"
+                >
+                  Tester la Démo
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+            </div>
+          </div>
+
+          {/* Features Horizontal */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4 border-t border-slate-800/50">
+            {[
+              { 
+                title: "Lazy Load", 
+                icon: <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>,
+                color: "text-blue-400"
+              },
+              { 
+                title: "Client-side", 
+                icon: <path d="M20 7h-9m3 3-3-3 3-3M4 17h9m-3 3 3-3-3-3"/>,
+                color: "text-purple-400"
+              },
+              { 
+                title: "Auto-Fail", 
+                icon: <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4m0 4h.01"/>,
+                color: "text-rose-400"
+              }
+            ].map((f, i) => (
+              <div key={i} className="flex flex-col items-center sm:items-start text-center sm:text-left space-y-2 group cursor-default">
+                <div className={`${f.color} transition-colors group-hover:text-white`}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="w-6 h-6">
+                    {f.icon}
+                  </svg>
+                </div>
+                <h4 className="text-slate-100 font-bold text-sm tracking-wide">{f.title}</h4>
+                <p className="text-slate-500 text-xs leading-relaxed">Architecture optimisée pour le runtime.</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Subtle Footer Overlay */}
+        <div className="absolute bottom-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent" />
       </div>
     </div>
   );

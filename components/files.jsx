@@ -269,7 +269,7 @@ const NewFolderModal = ({ currentPath, onCreate, onClose }) => {
   );
 };
 
-const UploadModal = ({ currentPath, onUpload, onClose }) => {
+const UploadModal = ({ currentPath, onUpload, onUploadComplete, onClose }) => {
   const [files, setFiles] = useState([]);
   const [progress, setProgress] = useState({});
   const [isUploading, setIsUploading] = useState(false);
@@ -286,7 +286,11 @@ const UploadModal = ({ currentPath, onUpload, onClose }) => {
       });
     }
     setIsUploading(false);
-    onClose();
+    if (onUploadComplete) {
+      onUploadComplete();
+    } else {
+      onClose();
+    }
   };
 
   return (
@@ -1040,6 +1044,9 @@ const FileManager = ({ baseUrl = '', className = '' }) => {
   const handleUpload = async (path, file, onProgress) => {
     const fullPath = joinPath(path, file.name);
     await api.upload(fullPath, file, true, onProgress);
+  };
+
+  const handleUploadComplete = () => {
     loadDirectory(currentPath);
     setModal({ type: null });
   };
@@ -1217,7 +1224,7 @@ const FileManager = ({ baseUrl = '', className = '' }) => {
       </Modal>
 
       <Modal isOpen={modal.type === 'upload'} onClose={() => setModal({ type: null })} title="Uploader des fichiers" size="md">
-        {modal.type === 'upload' && <UploadModal currentPath={currentPath} onUpload={handleUpload} onClose={() => setModal({ type: null })} />}
+        {modal.type === 'upload' && <UploadModal currentPath={currentPath} onUpload={handleUpload} onUploadComplete={handleUploadComplete} onClose={() => setModal({ type: null })} />}
       </Modal>
 
       <Modal isOpen={modal.type === 'delete'} onClose={() => setModal({ type: null })} title="Confirmer la suppression" size="sm">
