@@ -129,22 +129,7 @@ window.loadModule = loadModule;
 
 const ErrorComponent = ({ handleRetry, error }) => {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem', textAlign: 'center' }}>
-      <p style={{ color: '#ef4444', marginBottom: '1rem' }}>Une erreur s'est produite lors du chargement.</p>
-      <button
-        onClick={handleRetry}
-        style={{ 
-          padding: '0.5rem 1rem', 
-          backgroundColor: 'var(--color-primary)', 
-          color: 'white', 
-          borderRadius: '0.25rem', 
-          border: 'none',
-          cursor: 'pointer'
-        }}
-      >
-        Réessayer
-      </button>
-    </div>
+    null
   );
 };
 
