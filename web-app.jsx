@@ -1,3 +1,7 @@
+const REACT_URL = "https://unpkg.com/react@18/umd/react.production.min.js"
+const REACT_DOM_URL = "https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+const BABEL_URL = "https://unpkg.com/@babel/standalone/babel.min.js"
+
 const loadScript = (src) => {
   return new Promise((resolve, reject) => {
     const script = document.createElement('script');
@@ -11,10 +15,10 @@ const loadScript = (src) => {
 window.loadScript = loadScript;
 
 if (typeof React === 'undefined') {
-  await loadScript('https://unpkg.com/react@18/umd/react.production.min.js');
+  await loadScript(REACT_URL);
 }
 if (typeof ReactDOM === 'undefined') {
-  await loadScript('https://unpkg.com/react-dom@18/umd/react-dom.production.min.js');
+  await loadScript(REACT_DOM_URL);
 }
 
 const { useState , useEffect } = React;
@@ -102,7 +106,7 @@ const loadModule = async (url) => {
     if (!window.Babel) {
       await new Promise((resolve, reject) => {
         const script = document.createElement('script');
-        script.src = 'https://unpkg.com/@babel/standalone/babel.min.js';
+        script.src = BABEL_URL;
         script.onload = resolve;
         script.onerror = () => reject(new Error('Failed to load Babel'));
         document.head.appendChild(script);
