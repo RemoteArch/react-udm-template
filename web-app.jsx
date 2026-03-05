@@ -89,7 +89,7 @@ const ErrorPageLoader = ({ errorUrl, onErrorPageFailed }) => {
 let BASE_URL = '';
 
 const loadModule = async (url) => {
-  if(BASE_URL){
+  if(BASE_URL && !url.startsWith('http://') && !url.startsWith('https://')){
     url = BASE_URL+url;
   }
   const separator = url.includes('?') ? '&' : '?';
