@@ -1591,15 +1591,14 @@ const FileManager = ({ baseUrl = '', className = '', auth = null }) => {
   );
 };
 
-const FileManagers = (props) => {
-  console.log("apiurl" , props);
-  const apiUrl = props.apiUrl;
-  if(apiUrl && apiUrl != ''){
+const FileManagers = ({apiurl}) => {
+  
+  if(apiurl && apiurl != ''){
     return (
       <div className="h-screen animate-in fade-in duration-500">
           <FileManager 
-            key={`${apiUrl}`} 
-            baseUrl={apiUrl} 
+            key={`${apiurl}`} 
+            baseUrl={apiurl} 
             auth={null}
           />
       </div>
