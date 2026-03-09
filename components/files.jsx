@@ -178,6 +178,16 @@ const FileEditor = ({ path, content: initialContent, isNew, onSave, onClose }) =
   const [fileName, setFileName] = useState(isNew ? '' : path.split('/').pop());
   const [isSaving, setIsSaving] = useState(false);
 
+  useEffect(() => {
+    setContent(initialContent);
+  }, [initialContent, path]);
+
+  useEffect(() => {
+    if (!isNew) {
+      setFileName(path.split('/').pop());
+    }
+  }, [isNew, path]);
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -468,24 +478,205 @@ const UnzipModal = ({ selectedItem, currentPath, onUnzip, onClose }) => {
   );
 };
 
-// ============================================================================
+const RenameModal = ({ selectedItem, currentPath, onRename, onClose }) => {
+  const [newName, setNewName] = useState(selectedItem?.name || '');
+  const [loading, setLoading] = useState(false);
+
+  const handleConfirm = async () => {
+    if (!newName.trim() || newName === selectedItem.name) return;
+    setLoading(true);
+    try {
+      await onRename(joinPath(currentPath, selectedItem.name), newName.trim());
+      onClose();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="p-3 bg-blue-900/10 border border-blue-900/20 rounded-xl mb-2">
+        <p className="text-xs font-bold text-blue-400 uppercase mb-1">Élément actuel</p>
+        <p className="text-sm text-gray-300 font-mono truncate">{selectedItem.name}</p>
+      </div>
+      <div>
+        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">Nouveau nom</label>
+        <input
+          type="text"
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          className="w-full bg-black border border-gray-800 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+          placeholder="nouveau-nom.txt"
+          autoFocus
+        />
+      </div>
+      <div className="flex justify-end gap-3">
+        <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors">Annuler</button>
+        <button
+          onClick={handleConfirm}
+          disabled={loading || !newName.trim() || newName === selectedItem.name}
+          className="px-6 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-lg text-sm font-bold transition-all"
+        >
+          Renommer
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const CopyModal = ({ selectedItem, currentPath, onCopy, onClose }) => {
+  const [dest, setDest] = useState(joinPath(currentPath, selectedItem?.name + '_copy') || '');
+  const [loading, setLoading] = useState(false);
+
+  const handleConfirm = async () => {
+    if (!dest.trim()) return;
+    setLoading(true);
+    try {
+      await onCopy(joinPath(currentPath, selectedItem.name), dest.trim());
+      onClose();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="p-3 bg-blue-900/10 border border-blue-900/20 rounded-xl mb-2">
+        <p className="text-xs font-bold text-blue-400 uppercase mb-1">Source</p>
+        <p className="text-sm text-gray-300 font-mono truncate">{joinPath(currentPath, selectedItem.name)}</p>
+      </div>
+      <div>
+        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">Chemin de destination (relatif à la racine)</label>
+        <input
+          type="text"
+          value={dest}
+          onChange={(e) => setDest(e.target.value)}
+          className="w-full bg-black border border-gray-800 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+          placeholder="dossier/nouveau-fichier.txt"
+          autoFocus
+        />
+      </div>
+      <div className="flex justify-end gap-3">
+        <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors">Annuler</button>
+        <button
+          onClick={handleConfirm}
+          disabled={loading || !dest.trim()}
+          className="px-6 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-lg text-sm font-bold transition-all"
+        >
+          Copier
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const MoveModal = ({ selectedItem, currentPath, onMove, onClose }) => {
+  const [dest, setDest] = useState(joinPath(currentPath, selectedItem?.name) || '');
+  const [loading, setLoading] = useState(false);
+
+  const handleConfirm = async () => {
+    if (!dest.trim()) return;
+    setLoading(true);
+    try {
+      await onMove(joinPath(currentPath, selectedItem.name), dest.trim());
+      onClose();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="p-3 bg-orange-900/10 border border-orange-900/20 rounded-xl mb-2">
+        <p className="text-xs font-bold text-orange-400 uppercase mb-1">Source</p>
+        <p className="text-sm text-gray-300 font-mono truncate">{joinPath(currentPath, selectedItem.name)}</p>
+      </div>
+      <div>
+        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">Nouveau chemin (relatif à la racine)</label>
+        <input
+          type="text"
+          value={dest}
+          onChange={(e) => setDest(e.target.value)}
+          className="w-full bg-black border border-gray-800 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+          placeholder="autre-dossier/fichier.txt"
+          autoFocus
+        />
+      </div>
+      <div className="flex justify-end gap-3">
+        <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors">Annuler</button>
+        <button
+          onClick={handleConfirm}
+          disabled={loading || !dest.trim()}
+          className="px-6 py-2 bg-orange-600 hover:bg-orange-500 disabled:opacity-50 rounded-lg text-sm font-bold transition-all"
+        >
+          Déplacer
+        </button>
+      </div>
+    </div>
+  );
+};
+
 // API Service
 // ============================================================================
 const CHUNK_SIZE = 1024 * 1024; // 1MB
 
-const createFileAPI = (baseUrl) => {
+const createFileAPI = (baseUrl, auth = null) => {
+  const basicAuthHeader = (() => {
+    const username = auth?.username;
+    const password = auth?.password;
+    if (typeof username !== 'string' || typeof password !== 'string') return null;
+    if (!username && !password) return null;
+    try {
+      return `Basic ${btoa(`${username}:${password}`)}`;
+    } catch (_) {
+      return null;
+    }
+  })();
+
+  const parseJsonSafe = async (response) => {
+    const text = await response.text();
+    if (!text) return null;
+    try {
+      return JSON.parse(text);
+    } catch (_) {
+      return { __invalidJson: true, __rawText: text };
+    }
+  };
+
   const request = async (endpoint, options = {}) => {
     const url = `${baseUrl}${endpoint}`;
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-    });
-    const data = await response.json();
-    if (!data.success) throw new Error(data.error || 'Erreur API');
-    return data.data;
+    let response;
+    try {
+      response = await fetch(url, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(basicAuthHeader ? { Authorization: basicAuthHeader } : {}),
+          ...options.headers,
+        },
+      });
+    } catch (err) {
+      throw new Error(err?.message ? `Erreur réseau: ${err.message}` : 'Erreur réseau');
+    }
+
+    const data = await parseJsonSafe(response);
+
+    if (!response.ok) {
+      const msg = (data && !data.__invalidJson && (data.error || data.message))
+        ? (data.error || data.message)
+        : `Erreur HTTP ${response.status}`;
+      throw new Error(msg);
+    }
+
+    if (!data || data.__invalidJson) {
+      throw new Error('Réponse serveur invalide (JSON attendu)');
+    }
+
+    if (data.success === false) {
+      throw new Error(data.message || 'Erreur API');
+    }
+
+    return data;
   };
 
   const uploadFile = async (path, file, mkdirs = true, onProgress = null) => {
@@ -505,13 +696,29 @@ const createFileAPI = (baseUrl) => {
       }
       formData.append('file', chunk, file.name);
       
-      const response = await fetch(`${baseUrl}/write`, {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await response.json();
-      if (!data.success) throw new Error(data.error || 'Erreur upload');
-      
+      let response;
+      try {
+        response = await fetch(`${baseUrl}/write`, {
+          method: 'POST',
+          headers: {
+            ...(basicAuthHeader ? { Authorization: basicAuthHeader } : {}),
+          },
+          body: formData,
+        });
+      } catch (err) {
+        throw new Error(err?.message ? `Erreur réseau: ${err.message}` : 'Erreur réseau');
+      }
+
+      const data = await parseJsonSafe(response);
+      if (!response.ok) {
+        const msg = (data && !data.__invalidJson && (data.error || data.message))
+          ? (data.error || data.message)
+          : `Erreur HTTP ${response.status}`;
+        throw new Error(msg);
+      }
+      if (!data || data.__invalidJson) throw new Error('Réponse serveur invalide (JSON attendu)');
+      if (data.success === false) throw new Error(data.error || 'Erreur upload');
+
       if (onProgress) {
         onProgress(Math.round(((i + 1) / totalChunks) * 100));
       }
@@ -519,12 +726,75 @@ const createFileAPI = (baseUrl) => {
     return { success: true };
   };
 
+  const downloadFile = async (path) => {
+    const url = `${baseUrl}/read?path=${encodeURIComponent(path)}`;
+
+    if (!basicAuthHeader) {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = path.split('/').pop() || 'file';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      return;
+    }
+
+    let response;
+    try {
+      response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: basicAuthHeader,
+        },
+      });
+    } catch (err) {
+      throw new Error(err?.message ? `Erreur réseau: ${err.message}` : 'Erreur réseau');
+    }
+
+    if (!response.ok) {
+      throw new Error(`Erreur HTTP ${response.status}`);
+    }
+
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objectUrl;
+    a.download = path.split('/').pop() || 'file';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(objectUrl);
+  };
+
+  const readTextFile = async (path) => {
+    const url = `${baseUrl}/read?path=${encodeURIComponent(path)}`;
+
+    let response;
+    try {
+      response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          ...(basicAuthHeader ? { Authorization: basicAuthHeader } : {}),
+        },
+      });
+    } catch (err) {
+      throw new Error(err?.message ? `Erreur réseau: ${err.message}` : 'Erreur réseau');
+    }
+
+    if (!response.ok) {
+      throw new Error(`Erreur HTTP ${response.status}`);
+    }
+
+    return await response.text();
+  };
+
   return {
     list: (path = '', recursive = false) => 
       request(`/list?path=${encodeURIComponent(path)}&recursive=${recursive ? 1 : 0}`),
     
-    read: (path, mode = 'text') => 
-      request(`/read?path=${encodeURIComponent(path)}&mode=${mode}`),
+    download: downloadFile,
+
+    readText: readTextFile,
     
     write: async (path, content, mkdirs = true) => {
       const blob = new Blob([content], { type: 'application/octet-stream' });
@@ -533,13 +803,30 @@ const createFileAPI = (baseUrl) => {
       formData.append('mkdirs', mkdirs ? '1' : '0');
       formData.append('file', blob, path.split('/').pop());
       
-      const response = await fetch(`${baseUrl}/write`, {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await response.json();
-      if (!data.success) throw new Error(data.error || 'Erreur écriture');
-      return data.data;
+      let response;
+      try {
+        response = await fetch(`${baseUrl}/write`, {
+          method: 'POST',
+          headers: {
+            ...(basicAuthHeader ? { Authorization: basicAuthHeader } : {}),
+          },
+          body: formData,
+        });
+      } catch (err) {
+        throw new Error(err?.message ? `Erreur réseau: ${err.message}` : 'Erreur réseau');
+      }
+
+      const data = await parseJsonSafe(response);
+      if (!response.ok) {
+        const msg = (data && !data.__invalidJson && (data.error || data.message))
+          ? (data.error || data.message)
+          : `Erreur HTTP ${response.status}`;
+        throw new Error(msg);
+      }
+      if (!data || data.__invalidJson) throw new Error('Réponse serveur invalide (JSON attendu)');
+      if (data.success === false) throw new Error(data.error || 'Erreur écriture');
+
+      return data;
     },
     
     upload: uploadFile,
@@ -569,6 +856,24 @@ const createFileAPI = (baseUrl) => {
       request('/unzip', {
         method: 'POST',
         body: JSON.stringify({ zipPath, dest }),
+      }),
+    
+    rename: (path, newName) => 
+      request('/rename', {
+        method: 'POST',
+        body: JSON.stringify({ path, newName }),
+      }),
+    
+    copy: (path, dest) => 
+      request('/copy', {
+        method: 'POST',
+        body: JSON.stringify({ path, dest }),
+      }),
+    
+    move: (path, dest) => 
+      request('/move', {
+        method: 'POST',
+        body: JSON.stringify({ path, dest }),
       }),
   };
 };
@@ -752,6 +1057,24 @@ const Icons = {
       <line x1="21" y1="21" x2="16.65" y2="16.65" />
     </svg>
   ),
+  AlertCircle: ({ className = "w-4 h-4", size, ...props }) => (
+    <svg
+      className={className}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <circle cx="12" cy="16" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  ),
 };
 
 const Toolbar = ({ 
@@ -852,68 +1175,11 @@ const Toolbar = ({
   );
 };
 
-const Sidebar = ({ currentPath, onNavigate }) => {
-  const sections = [
-    {
-      title: 'Favoris',
-      items: [
-        { label: 'Accueil', icon: Icons.Home, path: '' },
-        { label: 'Bureau', icon: Icons.Grid, path: 'Desktop' },
-        { label: 'Documents', icon: Icons.Folder, path: 'Documents' },
-        { label: 'Images', icon: Icons.FileImage, path: 'Images' },
-        { label: 'Téléchargements', icon: Icons.Download, path: 'Downloads' },
-      ]
-    },
-    {
-      title: 'Emplacements',
-      items: [
-        { label: 'Ce PC', icon: Icons.Archive, path: 'root' },
-        { label: 'Réseau', icon: Icons.Refresh, path: 'network' },
-      ]
-    }
-  ];
-
-  return (
-    <div className="w-64 bg-gray-900/80 border-r border-gray-800 flex flex-col hidden md:flex backdrop-blur-md">
-      <div className="flex-1 overflow-y-auto pt-4">
-        {sections.map((section, idx) => (
-          <div key={idx} className="mb-6">
-            <div className="px-6 mb-2 text-[10px] font-bold text-gray-500 uppercase tracking-[0.1em]">
-              {section.title}
-            </div>
-            <nav className="px-3 space-y-0.5">
-              {section.items.map((item, i) => (
-                <button
-                  key={i}
-                  onClick={() => onNavigate(item.path)}
-                  className={`w-full flex items-center gap-3 px-3 py-1.5 rounded-md text-sm transition-all duration-200 group
-                    ${currentPath === item.path 
-                      ? 'bg-blue-600/20 text-blue-400 shadow-[inset_0_0_0_1px_rgba(59,130,246,0.2)]' 
-                      : 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-200'}`}
-                >
-                  <item.icon className={`w-4 h-4 transition-colors ${currentPath === item.path ? 'text-blue-400' : 'text-gray-500 group-hover:text-gray-300'}`} />
-                  <span className="font-medium">{item.label}</span>
-                </button>
-              ))}
-            </nav>
-          </div>
-        ))}
-      </div>
-      <div className="p-4 border-t border-gray-800 bg-gray-900/40 font-mono tracking-tighter">
-        <div className="flex items-center gap-3 px-3 py-2 text-[11px] font-medium text-gray-500">
-          <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)] animate-pulse" />
-          <span className="uppercase tracking-wider">Serveur Connecté</span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // ============================================================================
 // Main FileManager Component
 // ============================================================================
 
-const FileManager = ({ baseUrl = '', className = '' }) => {
+const FileManager = ({ baseUrl = '', className = '', auth = null }) => {
   // --- Logique (Conservée à l'identique) ---
   const [currentPath, setCurrentPath] = useState('');
   const [items, setItems] = useState([]);
@@ -925,20 +1191,27 @@ const FileManager = ({ baseUrl = '', className = '' }) => {
   const [contextMenu, setContextMenu] = useState(null);
   const [modal, setModal] = useState({ type: null, data: null });
 
-  const api = useMemo(() => createFileAPI(baseUrl), [baseUrl]);
+  const api = useMemo(() => createFileAPI(baseUrl, auth), [baseUrl, auth]);
 
   const loadDirectory = useCallback(async (path = '') => {
     setLoading(true);
     setError(null);
     setSelected(new Set());
     try {
-      const data = await api.list(path);
-      const rawItems = data.items || data || [];
+      const res = await api.list(path);
+      const payload = (res && typeof res === 'object' && 'data' in res) ? res.data : res;
+      const rawItems = Array.isArray(payload?.items)
+        ? payload.items
+        : Array.isArray(payload)
+          ? payload
+          : [];
+
       const normalizedItems = rawItems.map(item => ({
         ...item,
         name: item.name || item.path?.split('/').pop() || item.path,
         isDir: item.isDir ?? (item.type === 'dir'),
       }));
+
       const sortedItems = normalizedItems.sort((a, b) => {
         if (a.isDir !== b.isDir) return b.isDir - a.isDir;
         return a.name.localeCompare(b.name);
@@ -946,7 +1219,7 @@ const FileManager = ({ baseUrl = '', className = '' }) => {
       setItems(sortedItems);
       setCurrentPath(path);
     } catch (err) {
-      setError(err.message);
+      setError(err?.message || 'Erreur lors du chargement du dossier');
     } finally {
       setLoading(false);
     }
@@ -986,27 +1259,37 @@ const FileManager = ({ baseUrl = '', className = '' }) => {
     }
   };
 
+  const isTextFile = (name) => {
+    const textExtensions = ['txt', 'md', 'log', 'json', 'xml', 'html', 'htm', 'css', 'js', 'jsx', 'ts', 'tsx', 'py', 'rb', 'java', 'c', 'cpp', 'h', 'hpp', 'sh', 'bash', 'yml', 'yaml', 'toml', 'ini', 'cfg', 'conf', 'env', 'gitignore', 'sql', 'csv', 'svg', 'php', 'go', 'rs', 'swift', 'kt', 'dart', 'vue', 'svelte', 'astro', 'lua', 'r', 'pl', 'scala', 'clj', 'ex', 'exs', 'erl', 'hrl', 'hs', 'ml', 'fs', 'vb', 'cs', 'groovy', 'gradle', 'properties', 'bat', 'ps1', 'dockerfile', 'makefile', 'cmake', 'asm', 's', 'proto', 'graphql', 'prisma', 'lock', 'editorconfig', 'prettierrc', 'eslintrc', 'babelrc', 'npmrc', 'htaccess'];
+    const ext = name.split('.').pop()?.toLowerCase() || '';
+    return textExtensions.includes(ext);
+  };
+
   const handleOpen = async (item) => {
     if (item.isDir) {
       loadDirectory(joinPath(currentPath, item.name));
-    } else {
+    } else if (isTextFile(item.name)) {
+      const path = joinPath(currentPath, item.name);
+      setError(null);
       try {
-        const data = await api.read(joinPath(currentPath, item.name), 'text');
+        const content = await api.readText(path);
         setModal({ 
           type: 'edit', 
           data: { 
-            path: joinPath(currentPath, item.name), 
-            content: data.content || data 
+            path,
+            content
           } 
         });
       } catch (err) {
-        setError(`Impossible de lire le fichier: ${err.message}`);
+        setError(err?.message || 'Erreur lors de la lecture du fichier');
       }
+    } else {
+      api.download(joinPath(currentPath, item.name));
     }
   };
 
   const handleContextMenu = (item, e) => {
-    e.preventDefault(); // Empêche le menu navigateur par défaut
+    e.preventDefault();
     if (!selected.has(item.name)) {
       setSelected(new Set([item.name]));
     }
@@ -1015,10 +1298,11 @@ const FileManager = ({ baseUrl = '', className = '' }) => {
       y: e.clientY,
       items: [
         { label: 'Ouvrir', icon: Icons.FolderOpen, onClick: () => handleOpen(item) },
-        { label: 'Renommer', icon: Icons.Edit, onClick: () => {} },
+        ...(!item.isDir ? [{ label: 'Télécharger', icon: Icons.Download, onClick: () => api.download(joinPath(currentPath, item.name)) }] : []),
         { separator: true },
-        { label: 'Copier', icon: Icons.Copy, onClick: () => {} },
-        { label: 'Couper', icon: Icons.Cut, onClick: () => {} },
+        { label: 'Renommer', icon: Icons.Edit, onClick: () => setModal({ type: 'rename', data: item }) },
+        { label: 'Copier vers...', icon: Icons.Copy, onClick: () => setModal({ type: 'copy', data: item }) },
+        { label: 'Déplacer vers...', icon: Icons.Cut, onClick: () => setModal({ type: 'move', data: item }) },
         { separator: true },
         { label: 'Compresser', icon: Icons.Archive, onClick: () => setModal({ type: 'zip' }) },
         ...(item.name.endsWith('.zip') ? [{ label: 'Extraire', icon: Icons.Extract, onClick: () => setModal({ type: 'unzip', data: item }) }] : []),
@@ -1029,21 +1313,33 @@ const FileManager = ({ baseUrl = '', className = '' }) => {
   };
 
   const handleSave = async (path, content) => {
-    await api.write(path, content);
-    loadDirectory(currentPath);
-    setModal({ type: null });
+    try {
+      await api.write(path, content);
+      loadDirectory(currentPath);
+      setModal({ type: null });
+    } catch (err) {
+      setError(err?.message || 'Erreur lors de la sauvegarde');
+    }
   };
 
   const handleDelete = async () => {
-    const paths = selectedItems.map(item => joinPath(currentPath, item.name));
-    await api.delete(paths);
-    loadDirectory(currentPath);
-    setModal({ type: null });
+    try {
+      const paths = selectedItems.map(item => joinPath(currentPath, item.name));
+      await api.delete(paths);
+      loadDirectory(currentPath);
+      setModal({ type: null });
+    } catch (err) {
+      setError(err?.message || 'Erreur lors de la suppression');
+    }
   };
 
   const handleUpload = async (path, file, onProgress) => {
-    const fullPath = joinPath(path, file.name);
-    await api.upload(fullPath, file, true, onProgress);
+    try {
+      const fullPath = joinPath(path, file.name);
+      await api.upload(fullPath, file, true, onProgress);
+    } catch (err) {
+      setError(err?.message || 'Erreur lors de l\'upload');
+    }
   };
 
   const handleUploadComplete = () => {
@@ -1052,28 +1348,69 @@ const FileManager = ({ baseUrl = '', className = '' }) => {
   };
 
   const handleMkdir = async (path) => {
-    await api.mkdir(path);
-    loadDirectory(currentPath);
-    setModal({ type: null });
+    try {
+      await api.mkdir(path);
+      loadDirectory(currentPath);
+      setModal({ type: null });
+    } catch (err) {
+      setError(err?.message || 'Erreur lors de la création du dossier');
+    }
   };
 
   const handleZip = async (zipPath, paths) => {
-    await api.zip(zipPath, paths);
-    loadDirectory(currentPath);
-    setModal({ type: null });
+    try {
+      await api.zip(zipPath, paths);
+      loadDirectory(currentPath);
+      setModal({ type: null });
+    } catch (err) {
+      setError(err?.message || 'Erreur lors de la compression');
+    }
   };
 
   const handleUnzip = async (zipPath, dest) => {
-    await api.unzip(zipPath, dest);
-    loadDirectory(currentPath);
-    setModal({ type: null });
+    try {
+      await api.unzip(zipPath, dest);
+      loadDirectory(currentPath);
+      setModal({ type: null });
+    } catch (err) {
+      setError(err?.message || 'Erreur lors de l\'extraction');
+    }
   };
 
-  // --- Rendu UI Amélioré ---
+  const handleRename = async (path, newName) => {
+    try {
+      await api.rename(path, newName);
+      loadDirectory(currentPath);
+      setModal({ type: null });
+    } catch (err) {
+      setError(err?.message || 'Erreur lors du renommage');
+    }
+  };
+
+  const handleCopy = async (srcPath, destPath) => {
+    try {
+      await api.copy(srcPath, destPath);
+      loadDirectory(currentPath);
+      setModal({ type: null });
+    } catch (err) {
+      setError(err?.message || 'Erreur lors de la copie');
+    }
+  };
+
+  const handleMove = async (srcPath, destPath) => {
+    try {
+      await api.move(srcPath, destPath);
+      loadDirectory(currentPath);
+      setModal({ type: null });
+    } catch (err) {
+      setError(err?.message || 'Erreur lors du déplacement');
+    }
+  };
+
   if (!baseUrl) {
     return (
       <div className={`flex flex-col items-center justify-center h-64 bg-[#0B0F1A] text-slate-500 rounded-2xl border-2 border-dashed border-white/5 ${className}`}>
-        <Icons.AlertTriangle className="w-8 h-8 mb-2 opacity-20" />
+        <Icons.Folder className="w-8 h-8 mb-2 opacity-20" />
         <p className="text-sm font-medium italic">Veuillez configurer le baseUrl du serveur</p>
       </div>
     );
@@ -1238,13 +1575,36 @@ const FileManager = ({ baseUrl = '', className = '' }) => {
       <Modal isOpen={modal.type === 'unzip'} onClose={() => setModal({ type: null })} title="Extraire" size="sm">
         {modal.type === 'unzip' && modal.data && <UnzipModal selectedItem={modal.data} currentPath={currentPath} onUnzip={handleUnzip} onClose={() => setModal({ type: null })} />}
       </Modal>
+
+      <Modal isOpen={modal.type === 'rename'} onClose={() => setModal({ type: null })} title="Renommer" size="sm">
+        {modal.type === 'rename' && modal.data && <RenameModal selectedItem={modal.data} currentPath={currentPath} onRename={handleRename} onClose={() => setModal({ type: null })} />}
+      </Modal>
+
+      <Modal isOpen={modal.type === 'copy'} onClose={() => setModal({ type: null })} title="Copier vers" size="sm">
+        {modal.type === 'copy' && modal.data && <CopyModal selectedItem={modal.data} currentPath={currentPath} onCopy={handleCopy} onClose={() => setModal({ type: null })} />}
+      </Modal>
+
+      <Modal isOpen={modal.type === 'move'} onClose={() => setModal({ type: null })} title="Déplacer vers" size="sm">
+        {modal.type === 'move' && modal.data && <MoveModal selectedItem={modal.data} currentPath={currentPath} onMove={handleMove} onClose={() => setModal({ type: null })} />}
+      </Modal>
     </div>
   );
 };
 
-const APILINKURL = "http://cdn.jsdelivr.net/gh/remotearch/php-api-template/file.php";
+const FileManagers = ({apiUrl}) => {
 
-const FileManagers = () => {
+  if(apiUrl && apiUrl != ''){
+    return (
+      <div className="h-screen animate-in fade-in duration-500">
+          <FileManager 
+            key={`${apiUrl}`} 
+            baseUrl={apiUrl} 
+            auth={null}
+          />
+      </div>
+    )
+  }
+
   // --- Logique d'état et Persistance ---
   const [sources, setSources] = React.useState(() => {
     const saved = localStorage.getItem('fileManagerUrls');
@@ -1259,6 +1619,7 @@ const FileManagers = () => {
         return parsed.map((url, i) => ({
           name: (String(url).replace(/^.*\//, '') || `Source ${i + 1}`),
           url: String(url),
+          auth: null,
         }));
       }
       return parsed
@@ -1266,6 +1627,12 @@ const FileManagers = () => {
         .map((s, i) => ({
           name: (typeof s.name === 'string' && s.name.trim()) ? s.name.trim() : `Source ${i + 1}`,
           url: typeof s.url === 'string' ? s.url : '',
+          auth: (s.auth && typeof s.auth === 'object')
+            ? {
+              username: typeof s.auth.username === 'string' ? s.auth.username : '',
+              password: typeof s.auth.password === 'string' ? s.auth.password : '',
+            }
+            : null,
         }))
         .filter((s) => s.url);
     } catch {
@@ -1276,6 +1643,8 @@ const FileManagers = () => {
   const [activeTab, setActiveTab] = React.useState(null);
   const [newSourceName, setNewSourceName] = React.useState('');
   const [newSourceUrl, setNewSourceUrl] = React.useState('');
+  const [newSourceUsername, setNewSourceUsername] = React.useState('');
+  const [newSourcePassword, setNewSourcePassword] = React.useState('');
   const [isAddModalOpen, setIsAddModalOpen] = React.useState(false);
 
   React.useEffect(() => {
@@ -1288,10 +1657,18 @@ const FileManagers = () => {
     const url = newSourceUrl.trim();
     if (!name || !url) return;
     if (sources.some((s) => s.url === url)) return;
+
+    const username = newSourceUsername;
+    const password = newSourcePassword;
+    const auth = (username || password)
+      ? { username, password }
+      : null;
     
-    setSources([...sources, { name, url }]);
+    setSources([...sources, { name, url, auth }]);
     setNewSourceName('');
     setNewSourceUrl('');
+    setNewSourceUsername('');
+    setNewSourcePassword('');
     setIsAddModalOpen(false);
   };
 
@@ -1331,6 +1708,12 @@ const FileManagers = () => {
           .map((s, i) => ({
             name: (typeof s.name === 'string' && s.name.trim()) ? s.name.trim() : `Source ${i + 1}`,
             url: s.url.trim(),
+            auth: (s.auth && typeof s.auth === 'object')
+              ? {
+                username: typeof s.auth.username === 'string' ? s.auth.username : '',
+                password: typeof s.auth.password === 'string' ? s.auth.password : '',
+              }
+              : null,
           }))
           .filter((s) => !sources.some((existing) => existing.url === s.url));
         if (valid.length > 0) {
@@ -1370,7 +1753,7 @@ const FileManagers = () => {
           {sources.map((source, index) => (
             <div
               key={index}
-              className={`group flex items-center min-w-fit h-9 px-3 rounded-lg text-sm transition-all duration-200 border ${
+              className={`group flex items-center min-w-fit h-9 px-3 rounded-lg text-sm transition-all border ${
                 activeTab === index
                   ? 'bg-white/10 text-white border-white/10 shadow-sm'
                   : 'text-slate-500 border-transparent hover:bg-white/5 hover:text-slate-200'
@@ -1403,16 +1786,6 @@ const FileManagers = () => {
         >
           <Icons.Plus size={18} className="group-hover:rotate-90 transition-transform duration-300 w-3" />
         </button>
-
-        {/* Bouton Télécharger le fichier PHP */}
-        <a
-          href={APILINKURL}
-          download="file.php"
-          className="ml-2 p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/10 transition-all active:scale-95"
-          title="Télécharger le fichier PHP"
-        >
-          <Icons.Download size={18} />
-        </a>
 
         {/* Bouton Exporter les sources */}
         <button
@@ -1482,23 +1855,13 @@ const FileManagers = () => {
                 </div>
                 <h3 className="text-xl font-medium text-slate-300">Aucune source configurée</h3>
                 <p className="text-slate-500 mt-2 mb-8 text-center max-w-xs">Connectez votre premier serveur de fichiers pour commencer l'exploration.</p>
-                <div className="flex items-center gap-4">
-                  <button 
-                    onClick={() => setIsAddModalOpen(true)}
-                    className="flex items-center px-6 py-3 bg-white text-black rounded-xl font-bold hover:bg-slate-200 transition-all active:scale-95"
-                  >
-                    <Icons.Plus size={18} className="mr-2" />
-                    Ajouter une source
-                  </button>
-                  <a
-                    href={APILINKURL}
-                    download="file.php"
-                    className="flex items-center px-6 py-3 bg-white/5 text-slate-300 rounded-xl font-medium hover:bg-white/10 border border-white/10 transition-all active:scale-95"
-                  >
-                    <Icons.Download size={18} className="mr-2" />
-                    Télécharger le PHP
-                  </a>
-                </div>
+                <button 
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="flex items-center px-6 py-3 bg-white text-black rounded-xl font-bold hover:bg-slate-200 transition-all active:scale-95"
+                >
+                  <Icons.Plus size={18} className="mr-2" />
+                  Ajouter une source
+                </button>
               </div>
             )}
           </div>
@@ -1508,6 +1871,7 @@ const FileManagers = () => {
                <FileManager 
                 key={`${activeTab}-${sources[activeTab].url}`} 
                 baseUrl={sources[activeTab].url} 
+                auth={sources[activeTab].auth}
                />
             </div>
           )
@@ -1521,6 +1885,8 @@ const FileManagers = () => {
           setIsAddModalOpen(false);
           setNewSourceName('');
           setNewSourceUrl('');
+          setNewSourceUsername('');
+          setNewSourcePassword('');
         }}
         title="Nouvelle Connexion"
       >
@@ -1545,6 +1911,29 @@ const FileManagers = () => {
               onKeyDown={(e) => e.key === 'Enter' && addSource()}
               className="w-full bg-[#0F1117] border border-white/10 rounded-xl px-4 py-3 text-sm font-mono focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 outline-none transition-all placeholder:text-slate-700"
               placeholder="https://api.votre-domaine.com"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Basic Auth (optionnel) - Username</label>
+            <input
+              type="text"
+              value={newSourceUsername}
+              onChange={(e) => setNewSourceUsername(e.target.value)}
+              className="w-full bg-[#0F1117] border border-white/10 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 outline-none transition-all placeholder:text-slate-700"
+              placeholder="username"
+              autoComplete="username"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Basic Auth (optionnel) - Password</label>
+            <input
+              type="password"
+              value={newSourcePassword}
+              onChange={(e) => setNewSourcePassword(e.target.value)}
+              className="w-full bg-[#0F1117] border border-white/10 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 outline-none transition-all placeholder:text-slate-700"
+              placeholder="password"
+              autoComplete="current-password"
             />
           </div>
           
