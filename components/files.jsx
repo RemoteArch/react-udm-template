@@ -1592,7 +1592,7 @@ const FileManager = ({ baseUrl = '', className = '', auth = null }) => {
 };
 
 const FileManagers = ({apiUrl}) => {
-
+  console.log("apiurl" , apiUrl);
   if(apiUrl && apiUrl != ''){
     return (
       <div className="h-screen animate-in fade-in duration-500">
