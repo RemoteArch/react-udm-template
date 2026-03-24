@@ -1,0 +1,15 @@
+# Configuration de déploiement
+project: cdn-template
+
+# Commandes de build - Liste de commandes à exécuter pour préparer les fichiers
+build:
+  - echo Building project...
+  - build
+  # - pnpm run build
+  # - composer install
+
+# Liste des déploiements
+deploy:
+  - url: https://cdn.pass.cm/file.php
+    localDir: ./dist
+    remoteDir: /
