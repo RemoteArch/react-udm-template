@@ -91,42 +91,51 @@ const ErrorPageLoader = ({ errorUrl, onErrorPageFailed }) => {
 };
 
 let BASE_URL = '';
+let CACHE_MAPS = {};
 
 const loadModule = async (url) => {
   if(BASE_URL && !url.startsWith('http://') && !url.startsWith('https://')){
     url = BASE_URL+url;
   }
+  const key = url;
+  const cached = CACHE_MAPS[key];
+  if (cached && cached.module) {
+    return cached.module;
+  }
+  if (cached && cached.promise) {
+    return await cached.promise;
+  }
   const separator = url.includes('?') ? '&' : '?';
   const finalUrl = `${url}${separator}_ts=${Date.now()}`;
-  const response = await fetch(finalUrl);
-  const source = await response.text();
+  const loader = (async () => {
+    const response = await fetch(finalUrl);
+    const source = await response.text();
 
-  let code = source;
-  if (/\.jsx$/i.test(url)) {
-    if (!window.Babel) {
-      await new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = BABEL_URL;
-        script.onload = resolve;
-        script.onerror = () => reject(new Error('Failed to load Babel'));
-        document.head.appendChild(script);
+    let code = source;
+    if (/\.jsx$/i.test(url)) {
+      if (!window.Babel) {
+        await loadScript(BABEL_URL);
+      }
+      const result = Babel.transform(source, {
+        presets: ["react"],
+        sourceType: "module",
       });
+      code = result.code;
     }
-    const result = Babel.transform(source, {
-      presets: ["react"],
-      sourceType: "module",
-    });
-    code = result.code;
-  }
 
-  const blob = new Blob([code], { type: "text/javascript" });
-  const blobUrl = URL.createObjectURL(blob);
-  try {
-    const module = await import(blobUrl);
-    return module;
-  } finally {
-    URL.revokeObjectURL(blobUrl);
-  }
+    const blob = new Blob([code], { type: "text/javascript" });
+    const blobUrl = URL.createObjectURL(blob);
+    try {
+      const module = await import(blobUrl);
+      return module;
+    } finally {
+      URL.revokeObjectURL(blobUrl);
+    }
+  })();
+  CACHE_MAPS[key] = { promise: loader };
+  const module = await loader;
+  CACHE_MAPS[key] = { module };
+  return module;
 };
 
 window.loadModule = loadModule;
