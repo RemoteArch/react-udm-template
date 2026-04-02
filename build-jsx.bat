@@ -73,7 +73,7 @@ if exist "!ABS!\" (
   )
   
   REM --- Vérifier que c'est un fichier .jsx ---
-  echo !ABS! | findstr /i "\.jsx$" >nul
+  echo !ABS! | find /i ".jsx" >nul
   if errorlevel 1 (
     echo [%DATE% %TIME%] ERREUR: Le fichier doit avoir l'extension .jsx
     exit /b 1
