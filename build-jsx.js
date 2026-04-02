@@ -67,24 +67,38 @@ const globalPath = getGlobalNodeModules();
 const presetReactPath = path.join(globalPath, '@babel/preset-react');
 const presetEnvPath = path.join(globalPath, '@babel/preset-env');
 
-// Récupérer le chemin du dossier en argument
+// Récupérer le chemin du dossier ou fichier en argument
 const args = process.argv.slice(2);
 if (args.length === 0) {
-    console.error('Usage: node build-jsx.js <chemin_du_dossier>');
+    console.error('Usage: node build-jsx.js <chemin_du_dossier_ou_fichier>');
     process.exit(1);
 }
 
-const componentsDir = path.resolve(args[0]);
+const inputPath = path.resolve(args[0]);
 
-if (!fs.existsSync(componentsDir)) {
-    console.error(`Erreur: Le dossier "${componentsDir}" n'existe pas`);
+if (!fs.existsSync(inputPath)) {
+    console.error(`Erreur: Le chemin "${inputPath}" n'existe pas`);
     process.exit(1);
 }
 
-// Liste des fichiers à compiler (sans extension)
-const files = fs.readdirSync(componentsDir)
-    .filter(file => file.endsWith('.jsx'))
-    .map(file => file.replace('.jsx', ''));
+let files = [];
+let componentsDir;
+
+// Vérifier si c'est un fichier .jsx individuel
+if (fs.statSync(inputPath).isFile() && inputPath.endsWith('.jsx')) {
+    // Fichier individuel
+    const fileName = path.basename(inputPath, '.jsx');
+    files = [fileName];
+    componentsDir = path.dirname(inputPath);
+    console.log(`Compilation du fichier individuel: ${fileName}.jsx\n`);
+} else {
+    // Dossier complet
+    componentsDir = inputPath;
+    files = fs.readdirSync(componentsDir)
+        .filter(file => file.endsWith('.jsx'))
+        .map(file => file.replace('.jsx', ''));
+    console.log(`Compilation de ${files.length} fichiers...\n`);
+}
 
 async function buildFile(name) {
     const inputPath = path.join(componentsDir, `${name}.jsx`);
@@ -119,13 +133,15 @@ async function buildFile(name) {
 }
 
 async function build() {
-    console.log(`Compilation de ${files.length} fichiers...\n`);
-    
     for (const file of files) {
         await buildFile(file);
     }
     
-    console.log('\nTerminé!');
+    if (files.length === 1) {
+        console.log('\nCompilation du fichier terminée!');
+    } else {
+        console.log('\nCompilation terminée!');
+    }
 }
 
 build();

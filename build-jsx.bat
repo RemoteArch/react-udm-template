@@ -4,34 +4,44 @@ setlocal EnableExtensions EnableDelayedExpansion
 REM --- Se placer dans le dossier du .bat ---
 cd /d "%~dp0"
 
-set "SCRIPT=build-jsx.js"
-set "URL=https://cdn.jsdelivr.net/gh/remotearch/react-udm-template@1aacee29d0c2f972d99124162114fd6c9437b676/build-jsx.js"
+set "URL=https://cdn.jsdelivr.net/gh/remotearch/react-udm-template/build-jsx.js"
 
 echo [%DATE% %TIME%] Dossier du bat: %CD%
 
-REM --- Télécharger build-jsx.js si absent ---
-if not exist "%SCRIPT%" (
-  echo [%DATE% %TIME%] "%SCRIPT%" introuvable. Telechargement...
-  powershell -NoProfile -ExecutionPolicy Bypass ^
-    -Command "try { Invoke-WebRequest -Uri '%URL%' -OutFile '%SCRIPT%' -UseBasicParsing; exit 0 } catch { exit 1 }"
-  if errorlevel 1 (
-    echo [%DATE% %TIME%] ERREUR: Telechargement impossible depuis:
-    echo %URL%
-    exit /b 1
+REM --- Chercher build-jsx.js dans le PATH avec where ---
+where build-jsx.js >nul 2>&1
+if not errorlevel 1 (
+  REM Trouvé dans le PATH, utiliser le chemin complet
+  for /f "delims=" %%F in ('where build-jsx.js') do set "SCRIPT=%%F"
+  echo [%DATE% %TIME%] build-jsx.js trouve dans PATH: "%SCRIPT%"
+) else (
+  REM Pas trouvé dans le PATH, utiliser le fichier local
+  set "SCRIPT=build-jsx.js"
+  echo [%DATE% %TIME%] build-jsx.js non trouve dans PATH, utilisation locale
+  
+  REM --- Télécharger build-jsx.js si absent localement ---
+  if not exist "%SCRIPT%" (
+    echo [%DATE% %TIME%] "%SCRIPT%" introuvable. Telechargement...
+    powershell -NoProfile -ExecutionPolicy Bypass ^
+      -Command "try { Invoke-WebRequest -Uri '%URL%' -OutFile '%SCRIPT%' -UseBasicParsing; exit 0 } catch { exit 1 }"
+    if errorlevel 1 (
+      echo [%DATE% %TIME%] ERREUR: Telechargement impossible depuis:
+      echo %URL%
+      exit /b 1
+    )
   )
 )
 
 REM --- Vérifier Node.js ---
 where node >nul 2>&1
 if errorlevel 1 (
-  echo [%DATE% %TIME%] ERREUR: Node.js n'est pas trouve dans le PATH.
+  echo [%DATE% %TIME%] ERREUR: node n'est pas trouve dans le PATH.
   exit /b 1
 )
 
-REM --- Lire l'argument (dossier source) ---
+REM --- Lire l'argument (dossier ou fichier source) ---
 if "%~1"=="" (
-  echo Usage: %~nx0 ^<dossier_components^>
-  echo Exemple: %~nx0 "D:\TAF\project\PERSO\React UDM Template\components"
+  echo Usage: %~nx0 ^<dossier_ou_fichier^>
   echo Exemple: %~nx0 components
   exit /b 1
 )
@@ -40,16 +50,37 @@ REM --- Convertir en chemin absolu ---
 set "INPUT=%~1"
 for %%I in ("%INPUT%") do set "ABS=%%~fI"
 
-echo [%DATE% %TIME%] Dossier cible: "!ABS!"
-
-if not exist "!ABS!\*" (
-  echo [%DATE% %TIME%] ERREUR: Le dossier "!ABS!" n'existe pas.
-  exit /b 1
+REM --- Vérifier si c'est un fichier ou un dossier ---
+if exist "!ABS!\" (
+  REM C'est un dossier
+  echo [%DATE% %TIME%] Dossier cible: "!ABS!"
+  set "IS_FILE=0"
+  
+  if not exist "!ABS!\*" (
+    echo [%DATE% %TIME%] ERREUR: Le dossier "!ABS!" n'existe pas.
+    exit /b 1
+  )
+  
+  REM --- Pas de comptage pour dossier non plus ---
+) else (
+  REM C'est un fichier
+  echo [%DATE% %TIME%] Fichier cible: "!ABS!"
+  set "IS_FILE=1"
+  
+  if not exist "!ABS!" (
+    echo [%DATE% %TIME%] ERREUR: Le fichier "!ABS!" n'existe pas.
+    exit /b 1
+  )
+  
+  REM --- Vérifier que c'est un fichier .jsx ---
+  echo !ABS! | findstr /i "\.jsx$" >nul
+  if errorlevel 1 (
+    echo [%DATE% %TIME%] ERREUR: Le fichier doit avoir l'extension .jsx
+    exit /b 1
+  )
+  
+  REM --- Pas de comptage pour fichier individuel ---
 )
-
-REM --- Compter les .js AVANT compilation (recursif) ---
-set /a BEFORE=0
-for /r "!ABS!" %%F in (*.js) do set /a BEFORE+=1
 
 REM --- Executer le script Node avec le dossier en argument ---
 echo [%DATE% %TIME%] Execution: node "%SCRIPT%" "!ABS!"
@@ -61,16 +92,9 @@ if not "%RC%"=="0" (
   exit /b %RC%
 )
 
-REM --- Compter les .js APRES compilation ---
-set /a AFTER=0
-for /r "!ABS!" %%F in (*.js) do set /a AFTER+=1
-
-echo [%DATE% %TIME%] .js avant: %BEFORE%  /  .js apres: %AFTER%
-
-if %AFTER% GTR %BEFORE% (
-  echo [%DATE% %TIME%] OK: des fichiers .js ont ete generes.
-) else (
-  echo [%DATE% %TIME%] INFO: aucun nouveau .js detecte (peut-etre deja a jour).
+REM --- Si OK, terminer directement ---
+if "%RC%"=="0" (
+  echo [%DATE% %TIME%] Compilation terminee avec succes.
 )
 
 echo [%DATE% %TIME%] Termine.
