@@ -21,75 +21,6 @@ if (typeof ReactDOM === 'undefined') {
   await loadScript(REACT_DOM_URL);
 }
 
-const { useState , useEffect } = React;
-
-class ErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false, error: null, errorPageFailed: false };
-  }
-
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
-  }
-
-  handleRetry = () => {
-    this.setState({ hasError: false, error: null, errorPageFailed: false });
-  };
-
-  handleErrorPageFailed = () => {
-    this.setState({ errorPageFailed: true });
-  };
-
-  render() {
-    if (this.state.hasError) {
-      const { errorUrl } = this.props;
-      
-      if (errorUrl && !this.state.errorPageFailed) {
-        return (
-          <ErrorPageLoader 
-            errorUrl={errorUrl} 
-            onErrorPageFailed={this.handleErrorPageFailed}
-          />
-        );
-      }
-      
-      return (
-        <ErrorComponent handleRetry={this.handleRetry} error={this.state.error}/>
-      );
-    }
-    return this.props.children;
-  }
-}
-
-const ErrorPageLoader = ({ errorUrl, onErrorPageFailed }) => {
-  const [ErrorPage, setErrorPage] = useState(null);
-
-  useEffect(() => {
-    let mounted = true;
-    loadModule(errorUrl)
-      .then((mod) => {
-        if (mounted && mod?.default) {
-          setErrorPage(() => mod.default);
-        } else if (mounted) {
-          onErrorPageFailed();
-        }
-      })
-      .catch(() => {
-        if (mounted) {
-          onErrorPageFailed();
-        }
-      });
-    return () => { mounted = false; };
-  }, [errorUrl]);
-
-  if (!ErrorPage) {
-    return null;
-  }
-
-  return <ErrorPage />;
-};
-
 let BASE_URL = '';
 let CACHE_MAPS = {};
 
@@ -109,6 +40,10 @@ const loadModule = async (url) => {
   const finalUrl = `${url}${separator}_ts=${Date.now()}`;
   const loader = (async () => {
     const response = await fetch(finalUrl);
+    if (!response.ok) {
+      throw new Error(`Impossible de charger le module: ${url}`);
+    }
+
     const source = await response.text();
 
     let code = source;
@@ -140,58 +75,54 @@ const loadModule = async (url) => {
 
 window.loadModule = loadModule;
 
-const ErrorComponent = ({ handleRetry, error }) => {
-  return (
-    null
-  );
-};
-
-const RenderComponent = ({ url , props = {} , errorUrl, children }) => {
-
-  if(!url) return null;
-
-  const lazyJsxEsm = () => {
-    return React.lazy(async () => {
-      const mod = await loadModule(url);
-      const Comp = mod?.default;
-      if (!Comp) throw new Error(`Aucun export par défaut après chargement`);
-      return { default: Comp };
-    });
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorPageFailed: false };
   }
 
-  const Comp = React.useMemo(() => lazyJsxEsm(), [url]);
-  return (
-    <ErrorBoundary errorUrl={errorUrl}>
-      <React.Suspense fallback={<div>{children}</div>}>
-        <Comp {...props} />
-      </React.Suspense>
-    </ErrorBoundary>
-  );
-};
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
 
-function App({ url, props = {}, errorUrl, children }) {
-  return (
-    <RenderComponent key={url} url={url} props={props} errorUrl={errorUrl}>
-      {children}
-    </RenderComponent>
-  );
+  handleRetry = () => {
+    this.setState({ hasError: false, error: null, errorPageFailed: false });
+  };
+
+  handleErrorPageFailed = () => {
+    this.setState({ errorPageFailed: true });
+  };
+
+  render() {
+    if (this.state.hasError) {
+      if(this.props.errorhtml){
+        return (
+          <div dangerouslySetInnerHTML={{ __html: this.props.errorhtml }} />
+        );
+      }
+      return null;
+    }
+    return this.props.children;
+  }
 }
 
 class WebAppElement extends HTMLElement {
   constructor() {
     super();
     this._url = null;
-    this._errorUrl = null;
     this._props = {};
     this._children = null;
     this._root = null;
     this._observer = null;
     this._useShadow = false;
     this._shadowRoot = null;
+    this._errorHtml = null;
   }
 
   connectedCallback() {
     this._children = this.innerHTML;
+    this._extratErrorHtml();
+    
     this._useShadow = this.hasAttribute('shadow');
     
     if (this._useShadow) {
@@ -203,7 +134,6 @@ class WebAppElement extends HTMLElement {
     
     this._collectProps();
     const initialUrl = this.getAttribute('url');
-    this._errorUrl = this.getAttribute('error');
     BASE_URL = this.getAttribute('base-url') || '';
     if (initialUrl) {
       this._url = initialUrl;
@@ -229,13 +159,18 @@ class WebAppElement extends HTMLElement {
     }
   }
 
-  _handleAttributeChange(name, oldValue) {
+  _extratErrorHtml() {
+    const errorEl = this.querySelector('#web-app-error');
+    if (errorEl) {
+      this._errorHtml = errorEl.innerHTML;
+    }
+  }
+
+  _handleAttributeChange(name) {
     const newValue = this.getAttribute(name);
     if (name === 'url') {
       this._url = newValue;
-    } else if (name === 'error') {
-      this._errorUrl = newValue;
-    } else if (name === 'base-url') {
+    }else if (name === 'base-url') {
       BASE_URL = newValue || '';
     } else if (name !== 'shadow') {
       this._props[name] = newValue;
@@ -261,13 +196,34 @@ class WebAppElement extends HTMLElement {
     return this._props;
   }
 
+  lazyJsxEsm = (url) => {
+    return React.lazy(async () => {
+      try {
+        const mod = await loadModule(url);
+        const Comp = mod?.default;
+        if (!Comp) throw new Error(`Aucun export par défaut après chargement`);
+        return { default: Comp };
+      } catch (error) {
+        // Forcer l'erreur à être capturée par ErrorBoundary
+        console.error('Lazy component error:', error);
+        throw error;
+      }
+    });
+  }
+
   _render() {
     if (this._root && this._url) {
-      this._root.render(
-        <App url={this._url} props={this._props} errorUrl={this._errorUrl}>
-          <div dangerouslySetInnerHTML={{ __html: this._children }} />
-        </App>
+      const Comp = this.lazyJsxEsm(this._url);
+      // console.log(this._errorHtml)
+      const SuspenseWithError = () => (
+        <ErrorBoundary errorhtml={this._errorHtml}>
+          <React.Suspense fallback={<div dangerouslySetInnerHTML={{ __html: this._children }}></div>}>
+            <Comp {...this._props} />
+          </React.Suspense>
+        </ErrorBoundary>
       );
+      
+      this._root.render(<SuspenseWithError />);
     }
   }
 }
