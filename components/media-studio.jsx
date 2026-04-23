@@ -1,3 +1,360 @@
+class MediaControllerClient {
+  /**
+   * @param {string} baseUrl URL de base du contrôleur
+   * Ex:
+   *   /tools/index.php
+   *   https://example.com/api/media
+   */
+  constructor(baseUrl) {
+    if (!baseUrl || typeof baseUrl !== "string") {
+      throw new Error("baseUrl invalide");
+    }
+
+    this.baseUrl = baseUrl.replace(/\/+$/, "");
+  }
+
+  // --------------------------------------------------
+  // BAS NIVEAU
+  // --------------------------------------------------
+
+  async get(action, params = {}) {
+    const url = this.#buildUrl(action, params);
+
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
+    return this.#parseJsonResponse(res);
+  }
+
+  async post(action, params = {}, files = null) {
+    const body = this.#buildPostBody(params, files);
+
+    const res = await fetch(this.baseUrl, {
+      method: "POST",
+      body,
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
+    return this.#parseJsonResponse(res);
+  }
+
+  #buildUrl(action, params = {}) {
+    const url = new URL(this.baseUrl, window.location.origin);
+    url.searchParams.set("action", action);
+
+    for (const [key, value] of Object.entries(params || {})) {
+      this.#appendQueryValue(url.searchParams, key, value);
+    }
+
+    return url.toString();
+  }
+
+  #appendQueryValue(searchParams, key, value) {
+    if (value === undefined || value === null) return;
+
+    if (Array.isArray(value)) {
+      value.forEach((item) => {
+        this.#appendQueryValue(searchParams, `${key}[]`, item);
+      });
+      return;
+    }
+
+    if (typeof value === "object") {
+      for (const [subKey, subValue] of Object.entries(value)) {
+        this.#appendQueryValue(searchParams, `${key}[${subKey}]`, subValue);
+      }
+      return;
+    }
+
+    searchParams.append(key, String(value));
+  }
+
+  #buildPostBody(params = {}, files = null) {
+    const form = new FormData();
+
+    for (const [key, value] of Object.entries(params || {})) {
+      this.#appendFormValue(form, key, value);
+    }
+
+    this.#appendFiles(form, files);
+
+    return form;
+  }
+
+  #appendFormValue(form, key, value) {
+    if (value === undefined || value === null) return;
+
+    if (Array.isArray(value)) {
+      value.forEach((item, index) => {
+        if (item instanceof Blob || item instanceof File) {
+          form.append(`${key}[]`, item);
+        } else if (typeof item === "object" && item !== null) {
+          this.#appendFormValue(form, `${key}[${index}]`, item);
+        } else {
+          form.append(`${key}[]`, String(item));
+        }
+      });
+      return;
+    }
+
+    if (typeof value === "object" && !(value instanceof Blob) && !(value instanceof File)) {
+      for (const [subKey, subValue] of Object.entries(value)) {
+        this.#appendFormValue(form, `${key}[${subKey}]`, subValue);
+      }
+      return;
+    }
+
+    form.append(key, value);
+  }
+
+  #appendFiles(form, files) {
+    if (!files) return;
+
+    for (const [field, value] of Object.entries(files)) {
+      if (value === undefined || value === null) continue;
+
+      if (Array.isArray(value)) {
+        value.forEach((file) => {
+          if (file instanceof Blob || file instanceof File) {
+            form.append(`${field}[]`, file, file.name || "file");
+          }
+        });
+        continue;
+      }
+
+      if (value instanceof Blob || value instanceof File) {
+        form.append(field, value, value.name || "file");
+      }
+    }
+  }
+
+  async #parseJsonResponse(res) {
+    let data = null;
+    const text = await res.text();
+
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch (e) {
+      throw new Error(`Réponse non JSON (${res.status}) : ${text}`);
+    }
+
+    if (!res.ok) {
+      const message =
+        (data && (data.error || data.message)) ||
+        `Erreur HTTP ${res.status}`;
+      const err = new Error(message);
+      err.status = res.status;
+      err.response = data;
+      throw err;
+    }
+
+    return data;
+  }
+
+  // --------------------------------------------------
+  // ENDPOINTS
+  // --------------------------------------------------
+
+  createTempJob(params = {}) {
+    return this.post("create_temp_job", params);
+  }
+
+  uploadTemp(params = {}, files = {}) {
+    return this.post("upload_temp", params, files);
+  }
+
+  fetchTemp(params = {}) {
+    return this.post("fetch_temp", params);
+  }
+
+  execMedia(params = {}) {
+    return this.post("exec_media", params);
+  }
+
+  getTempFileInfo(params = {}) {
+    return this.get("temp_file_info", params);
+  }
+
+  getTempFileContent(params = {}) {
+    return this.get("temp_file_content", params);
+  }
+
+  getTempJobInfo(params = {}) {
+    return this.get("temp_job_info", params);
+  }
+
+  getTempJobLastCommand(params = {}) {
+    return this.get("temp_job_last_command", params);
+  }
+
+  getTempJobHistory(params = {}) {
+    return this.get("temp_job_history", params);
+  }
+
+  renameTemp(params = {}) {
+    return this.post("rename_temp", params);
+  }
+
+  copyTemp(params = {}) {
+    return this.post("copy_temp", params);
+  }
+
+  moveTemp(params = {}) {
+    return this.post("move_temp", params);
+  }
+
+  deleteTemp(params = {}) {
+    return this.post("delete_temp", params);
+  }
+
+  // --------------------------------------------------
+  // HELPERS HAUT NIVEAU
+  // --------------------------------------------------
+
+  /**
+   * Upload un seul fichier
+   * @param {File|Blob} file
+   * @param {object} options
+   */
+  uploadOne(file, options = {}) {
+    const { job, filename, field = "file", prefix, names } = options;
+
+    return this.uploadTemp(
+      {
+        ...(job ? { job } : {}),
+        ...(filename ? { filename } : {}),
+        ...(prefix ? { prefix } : {}),
+        ...(names ? { names } : {}),
+      },
+      { [field]: file }
+    );
+  }
+
+  /**
+   * Upload plusieurs fichiers sur le même champ
+   * @param {File[]} files
+   * @param {object} options
+   */
+  uploadMany(files, options = {}) {
+    const { job, field = "files", prefix, names } = options;
+
+    return this.uploadTemp(
+      {
+        ...(job ? { job } : {}),
+        ...(prefix ? { prefix } : {}),
+        ...(names ? { names } : {}),
+      },
+      { [field]: files }
+    );
+  }
+
+  /**
+   * Exécute ffmpeg
+   * @param {string[]} args
+   * @param {string[]} outputs
+   * @param {number|null} timeout
+   */
+  ffmpeg(args, outputs = [], timeout = null) {
+    return this.execMedia({
+      engine: "ffmpeg",
+      args,
+      outputs,
+      ...(timeout ? { timeout } : {}),
+    });
+  }
+
+  /**
+   * Exécute ffprobe
+   * @param {string[]} args
+   * @param {number|null} timeout
+   */
+  ffprobe(args, timeout = null) {
+    return this.execMedia({
+      engine: "ffprobe",
+      args,
+      ...(timeout ? { timeout } : {}),
+    });
+  }
+
+  /**
+   * Crée un job, upload les fichiers, puis exécute ffmpeg
+   * @param {object} config
+   */
+  async runWithNewJob(config = {}) {
+    const {
+      files = null,
+      uploadParams = {},
+      ffmpegArgs = [],
+      outputs = [],
+      timeout = null,
+    } = config;
+
+    const jobRes = await this.createTempJob();
+    const job = jobRes.job;
+
+    if (files) {
+      await this.uploadTemp({ job, ...uploadParams }, files);
+    }
+
+    const finalArgs = ffmpegArgs.map((x) => String(x));
+    const finalOutputs = outputs.map((x) => String(x));
+
+    const execRes = await this.ffmpeg(finalArgs, finalOutputs, timeout);
+
+    return {
+      job,
+      upload: files ? true : false,
+      exec: execRes,
+    };
+  }
+}
+
+/* =========================
+   EXEMPLES D’UTILISATION
+   =========================
+
+const api = new MediaControllerClient("/tools/index.php");
+
+// 1) créer un job
+const jobRes = await api.createTempJob();
+const job = jobRes.job;
+
+// 2) uploader un fichier
+await api.uploadOne(fileInput.files[0], {
+  job,
+  filename: "input.mp4"
+});
+
+// 3) lancer ffmpeg
+const result = await api.ffmpeg(
+  [
+    "-i", `jobs/${job}/input.mp4`,
+    "-vf", "scale=640:360",
+    "-c:v", "libx264",
+    `jobs/${job}/output.mp4`
+  ],
+  [`jobs/${job}/output.mp4`],
+  300
+);
+
+// 4) lire les infos
+const info = await api.getTempFileInfo({
+  path: `jobs/${job}/output.mp4`
+});
+
+// 5) supprimer le job
+await api.deleteTemp({ job });
+
+*/
+
+
+
 const { useState, useMemo, useCallback, useRef } = React;
 
 // ─────────────────────────────────────────────────────────────────────────────
