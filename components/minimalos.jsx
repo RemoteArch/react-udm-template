@@ -301,32 +301,17 @@ function AppWindow({ win, app, onClose, onMinimize, onMaximize, onFocus, zIndex,
 
   return (
     <div ref={elRef} onMouseDown={()=>onFocus(id)}
-      className="win-in"
-      style={{
-        position:"absolute", ...maxStyle, zIndex,
-        border:`1px solid ${borderCol}`,
-        background:P.b800, overflow:"hidden",
-        display:"flex", flexDirection:"column",
-        minWidth:"340px", minHeight:"240px",
-        boxShadow: isActive
-          ? `0 0 0 1px ${app.accent}18, 0 16px 48px rgba(0,0,0,.8)`
-          : "0 4px 24px rgba(0,0,0,.55)",
-        transition:"box-shadow .15s, border-color .15s",
-      }}>
+      className={`absolute flex flex-col overflow-hidden bg-base-800 border transition-colors ${isActive ? 'border-arch' : 'border-base-500'}`}
+      style={{ ...maxStyle, zIndex, minWidth:'340px', minHeight:'240px' }}>
 
       {/* ── Title bar ── */}
       <div onMouseDown={startDrag} data-titlebar
-        className="h-7 flex items-center border-b flex-shrink-0 select-none"
-        style={{ 
-          backgroundColor: isActive ? P.b850 : P.b900,
-          borderBottomColor: borderCol,
-          cursor: maximized ? "default" : "move"
-        }}>
+        className={`h-7 flex items-center border-b flex-shrink-0 select-none transition-colors ${isActive ? 'bg-base-850 border-arch' : 'bg-base-900 border-base-500'}`}
+        style={{ cursor: maximized ? 'default' : 'move' }}>
         {/* Left accent stripe */}
-        <div className="w-0.5 h-full flex-shrink-0" style={{ backgroundColor: isActive ? app.accent : P.b400 }} />
+        <div className={`w-0.5 h-full flex-shrink-0 transition-colors ${isActive ? 'bg-arch' : 'bg-base-400'}`} />
         {/* Glyph + title */}
-        <span className="flex-1 px-2.5 text-[11px] tracking-[0.05em] overflow-hidden text-ellipsis whitespace-nowrap"
-          style={{ color: isActive ? P.s : P.sMuted }}>
+        <span className={`flex-1 px-2.5 text-[11px] tracking-[0.05em] overflow-hidden text-ellipsis whitespace-nowrap transition-colors ${isActive ? 'text-snow' : 'text-snow-muted'}`}>
           <span className="mr-1.5">{app.glyph}</span>{app.label}
         </span>
         {/* Buttons */}
@@ -412,8 +397,8 @@ export default function Desktop() {
       <Bootstrap />
       <div className="w-screen h-screen overflow-hidden relative bg-base-950 font-mono select-none cursor-default">
 
-        {/* Ambient glow */}
-        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 14% 55%, #1793d10c 0%,transparent 50%), radial-gradient(ellipse at 90% 8%, #89b4fa07 0%,transparent 45%)" }} />
+        {/* Flat background accent */}
+        <div className="absolute inset-0 pointer-events-none bg-base-950" />
 
         {/* Workspace */}
         <div className="absolute overflow-hidden" style={{ top: BAR_H + 'px', left: 0, right: 0, bottom: 0 }}>
