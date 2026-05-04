@@ -1,654 +1,940 @@
-const { useState, useEffect } = React;
+/* ═══════════════════════════════════════════════════════════
+   MinimalOS — Dark Flat Design — Single JSX File
+   Props: apps = [{ nom, color, url }]
+   Dépendances CDN : Font Awesome 6 (chargé dynamiquement)
+═══════════════════════════════════════════════════════════ */
 
-function formatDate(date) {
-  return date.toLocaleDateString('fr-FR', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-}
+const { useState, useEffect, useMemo, useCallback, useRef } = React;
 
-if(!document.head.querySelector("link[href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css']")){
-  let link = document.createElement('link');
-  link.href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css";
-  link.rel= "stylesheet";
-  document.head.appendChild(link);
-}
+/* ─────────────────────────────────────────────────────────
+   CONSTANTES & CONFIG
+───────────────────────────────────────────────────────── */
+const PIN_CORRECT = "1234";
+const DB_NAME = "MinimalOS_DB";
+const DB_VERSION = 1;
+const STORE_NAME = "app_history";
+const MAX_RECENT = 20;
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   HOOK PERSONNALISÉ POUR LE THÈME
-═══════════════════════════════════════════════════════════════════════════ */
-function useTheme() {
-  const [theme, setTheme] = useState(() => {
-    const saved = localStorage.getItem('theme');
-    return saved || 'dark';
-  });
-
-  const colors = {
-    dark: {
-      bg: '#1a1a2e',
-      surface: '#16213e',
-      surfaceHover: '#0f3460',
-      border: '#2d3561',
-      text: '#f5f5f5',
-      textMuted: '#a8a8a8',
-      textSecondary: '#d4d4d4',
-      accent: '#e94560',
-      success: '#4caf50',
-      error: '#f44336',
-      warning: '#ff9800'
-    },
-    light: {
-      bg: '#f5f5f5',
-      surface: '#ffffff',
-      surfaceHover: '#e0e0e0',
-      border: '#d0d0d0',
-      text: '#212121',
-      textMuted: '#757575',
-      textSecondary: '#424242',
-      accent: '#e94560',
-      success: '#4caf50',
-      error: '#f44336',
-      warning: '#ff9800'
-    }
-  };
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-  };
-
-  useEffect(() => {
-    document.body.style.backgroundColor = colors[theme].bg;
-    document.body.style.color = colors[theme].text;
-  }, [theme, colors]);
-
-  return { theme, colors: colors[theme], toggleTheme };
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   DONNÉES APPLICATIONS
-═══════════════════════════════════════════════════════════════════════════ */
-const APPS_DATA = [
-  {
-    id: 'browser',
-    name: 'Navigateur',
-    category: 'Productivité',
-    icon: 'fas fa-globe',
-    color: '#1793d1',
-    url: 'https://www.google.com'
-  },
-  {
-    id: 'terminal',
-    name: 'Terminal',
-    category: 'Système',
-    icon: 'fas fa-terminal',
-    color: '#a6e3a1',
-    url: 'https://github.com'
-  },
-  {
-    id: 'files',
-    name: 'Fichiers',
-    category: 'Système',
-    icon: 'fas fa-folder',
-    color: '#f9e2af',
-    url: 'https://drive.google.com'
-  },
-  {
-    id: 'editor',
-    name: 'Éditeur',
-    category: 'Productivité',
-    icon: 'fas fa-edit',
-    color: '#cba6f7',
-    url: 'https://codepen.io'
-  },
-  {
-    id: 'music',
-    name: 'Musique',
-    category: 'Média',
-    icon: 'fas fa-music',
-    color: '#fab387',
-    url: 'https://www.youtube.com'
-  },
-  {
-    id: 'gallery',
-    name: 'Galerie',
-    category: 'Média',
-    icon: 'fas fa-images',
-    color: '#89dceb',
-    url: 'https://unsplash.com'
-  },
-  {
-    id: 'settings',
-    name: 'Paramètres',
-    category: 'Système',
-    icon: 'fas fa-cog',
-    color: '#89b4fa',
-    url: 'https://github.com/settings'
-  },
-  {
-    id: 'games',
-    name: 'Jeux',
-    category: 'Jeux',
-    icon: 'fas fa-gamepad',
-    color: '#f38ba8',
-    url: 'https://www.crazygames.com'
-  },
-  {
-    id: 'calendar',
-    name: 'Calendrier',
-    category: 'Productivité',
-    icon: 'fas fa-calendar',
-    color: '#94e2d5',
-    url: 'https://calendar.google.com'
-  },
-  {
-    id: 'notes',
-    name: 'Notes',
-    category: 'Productivité',
-    icon: 'fas fa-sticky-note',
-    color: '#f9e2af',
-    url: 'https://keep.google.com'
-  }
+const DEFAULT_APPS = [
+  { nom: "Navigateur",  color: "#38BDF8", url: "browser.js",   icon: "fa-globe"         },
+  { nom: "Terminal",    color: "#4ADE80", url: "terminal.js",  icon: "fa-terminal"      },
+  { nom: "Fichiers",    color: "#FBBF24", url: "files.js",     icon: "fa-folder"        },
+  { nom: "Éditeur",     color: "#A78BFA", url: "editor.js",    icon: "fa-pen-nib"       },
+  { nom: "Musique",     color: "#F472B6", url: "music.js",     icon: "fa-music"         },
+  { nom: "Galerie",     color: "#2DD4BF", url: "gallery.js",   icon: "fa-images"        },
+  { nom: "Paramètres",  color: "#94A3B8", url: "settings.js",  icon: "fa-cog"           },
+  { nom: "Jeux",        color: "#FB923C", url: "games.js",     icon: "fa-gamepad"       },
+  { nom: "Calendrier",  color: "#34D399", url: "calendar.js",  icon: "fa-calendar-days" },
+  { nom: "Notes",       color: "#FDE68A", url: "notes.js",     icon: "fa-note-sticky"   },
 ];
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   ÉCRAN DE CONNEXION
-═══════════════════════════════════════════════════════════════════════════ */
-function LoginScreen({ onLogin, onGuestLogin, colors, theme }) {
-  const [pin, setPin] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
-    
-    // Simulation d'authentification
-    setTimeout(() => {
-      if (pin === '1234' || pin === 'admin') {
-        onLogin({ name: 'Utilisateur', avatar: '👤' });
-      } else {
-        setError('PIN incorrect');
+/* ─────────────────────────────────────────────────────────
+   FONT AWESOME LOADER
+───────────────────────────────────────────────────────── */
+function useFontAwesome() {
+  useEffect(() => {
+    const id = "fa-cdn";
+    if (!document.getElementById(id)) {
+      const link = document.createElement("link");
+      link.id = id;
+      link.rel = "stylesheet";
+      link.href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css";
+      document.head.appendChild(link);
+    }
+  }, []);
+}
+
+/* ─────────────────────────────────────────────────────────
+   INDEXED DB HOOK
+───────────────────────────────────────────────────────── */
+function useAppHistory() {
+  const dbRef = useRef(null);
+  const [history, setHistory] = useState([]);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        const store = db.createObjectStore(STORE_NAME, { keyPath: "id", autoIncrement: true });
+        store.createIndex("url", "url", { unique: false });
+        store.createIndex("openedAt", "openedAt", { unique: false });
       }
-      setIsLoading(false);
-    }, 1000);
-  };
-  
+    };
+
+    req.onsuccess = (e) => {
+      dbRef.current = e.target.result;
+      loadHistory();
+      setReady(true);
+    };
+
+    req.onerror = () => {
+      // Fallback to localStorage if IndexedDB fails
+      try {
+        const saved = localStorage.getItem("os_app_history");
+        if (saved) setHistory(JSON.parse(saved));
+      } catch {}
+      setReady(true);
+    };
+  }, []);
+
+  const loadHistory = useCallback(() => {
+    if (!dbRef.current) return;
+    const tx = dbRef.current.transaction(STORE_NAME, "readonly");
+    const store = tx.objectStore(STORE_NAME);
+    const index = store.index("openedAt");
+    const req = index.openCursor(null, "prev");
+    const items = [];
+    req.onsuccess = (e) => {
+      const cursor = e.target.result;
+      if (cursor && items.length < MAX_RECENT) {
+        items.push(cursor.value);
+        cursor.continue();
+      } else {
+        setHistory(items);
+      }
+    };
+  }, []);
+
+  const recordOpen = useCallback((app) => {
+    const entry = {
+      url: app.url,
+      nom: app.nom,
+      color: app.color,
+      openedAt: Date.now(),
+    };
+
+    if (dbRef.current) {
+      const tx = dbRef.current.transaction(STORE_NAME, "readwrite");
+      const store = tx.objectStore(STORE_NAME);
+      store.add(entry);
+      tx.oncomplete = () => loadHistory();
+    } else {
+      // Fallback localStorage
+      try {
+        const saved = localStorage.getItem("os_app_history");
+        const arr = saved ? JSON.parse(saved) : [];
+        arr.unshift({ ...entry, id: Date.now() });
+        if (arr.length > MAX_RECENT) arr.pop();
+        localStorage.setItem("os_app_history", JSON.stringify(arr));
+        setHistory(arr);
+      } catch {}
+    }
+  }, [loadHistory]);
+
+  const clearHistory = useCallback(() => {
+    if (dbRef.current) {
+      const tx = dbRef.current.transaction(STORE_NAME, "readwrite");
+      tx.objectStore(STORE_NAME).clear();
+      tx.oncomplete = () => setHistory([]);
+    } else {
+      localStorage.removeItem("os_app_history");
+      setHistory([]);
+    }
+  }, []);
+
+  return { history, recordOpen, clearHistory, ready };
+}
+
+/* ─────────────────────────────────────────────────────────
+   UTILITAIRES
+───────────────────────────────────────────────────────── */
+function hexToRgba(hex, alpha = 1) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "À l'instant";
+  if (m < 60) return `Il y a ${m} min`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `Il y a ${h}h`;
+  const d = Math.floor(h / 24);
+  return `Il y a ${d}j`;
+}
+
+function getAppIcon(app) {
+  // Si l'objet app a une propriété icon, l'utiliser directement
+  if (app && app.icon) {
+    return app.icon;
+  }
+  return "fa-window-maximize";
+}
+
+/* ─────────────────────────────────────────────────────────
+   GLOBAL CSS INJECTION
+───────────────────────────────────────────────────────── */
+const CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&display=swap');
+
+  :root {
+    --os-bg:        #0D0F14;
+    --os-surface:   #141720;
+    --os-surface2:  #1C2030;
+    --os-surface3:  #232840;
+    --os-border:    rgba(255,255,255,0.06);
+    --os-border2:   rgba(255,255,255,0.10);
+    --os-text:      #E8ECF4;
+    --os-text2:     #8892A4;
+    --os-text3:     #4E5566;
+    --os-accent:    #6C63FF;
+    --os-r-sm:      10px;
+    --os-r-md:      16px;
+    --os-r-lg:      22px;
+    --os-r-xl:      30px;
+  }
+
+  .os-root * { box-sizing: border-box; margin: 0; padding: 0; }
+  .os-root { font-family: 'Sora', sans-serif; background: var(--os-bg); color: var(--os-text); min-height: 100vh; }
+
+  /* scrollbar */
+  .os-root ::-webkit-scrollbar { width: 4px; height: 4px; }
+  .os-root ::-webkit-scrollbar-track { background: transparent; }
+  .os-root ::-webkit-scrollbar-thumb { background: var(--os-border2); border-radius: 99px; }
+
+  /* animations */
+  @keyframes os-fadein {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes os-shake {
+    0%,100% { transform: translateX(0); }
+    20%      { transform: translateX(-8px); }
+    40%      { transform: translateX(8px); }
+    60%      { transform: translateX(-5px); }
+    80%      { transform: translateX(5px); }
+  }
+  @keyframes os-pulse-dot {
+    0%,100% { opacity: 0.4; transform: scale(0.85); }
+    50%     { opacity: 1;   transform: scale(1.1); }
+  }
+
+  .os-fadein { animation: os-fadein 0.3s ease both; }
+  .os-shake  { animation: os-shake 0.4s ease; }
+
+  /* global btn reset */
+  .os-root button { font-family: 'Sora', sans-serif; cursor: pointer; border: none; outline: none; background: none; }
+  .os-root input  { font-family: 'Sora', sans-serif; outline: none; }
+`;
+
+function useGlobalCSS() {
+  useEffect(() => {
+    const id = "os-global-css";
+    if (!document.getElementById(id)) {
+      const style = document.createElement("style");
+      style.id = id;
+      style.textContent = CSS;
+      document.head.appendChild(style);
+    }
+  }, []);
+}
+
+/* ─────────────────────────────────────────────────────────
+   SUB-COMPONENT: PinDot
+───────────────────────────────────────────────────────── */
+function PinDot({ filled, animating }) {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4"
-         style={{
-           backgroundColor: colors.bg,
-           backgroundImage: theme === 'dark' 
-             ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-             : 'linear-gradient(135deg, #667eea 0%, #f093fb 100%)'
-         }}>
-      <div className="w-full max-w-md">
-        {/* Carte glassmorphism */}
-        <div className="backdrop-blur-xl rounded-3xl p-8 shadow-2xl"
-             style={{
-               backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.3)',
-               border: '1px solid rgba(255, 255, 255, 0.2)'
-             }}>
-          {/* Avatar */}
-          <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl"
-                 style={{
-                   backgroundColor: colors.accent,
-                   color: 'white',
-                   boxShadow: `0 8px 32px ${colors.accent}40`
-                 }}>
-              👤
-            </div>
+    <div style={{
+      width: 14, height: 14,
+      borderRadius: "50%",
+      background: filled ? "var(--os-accent)" : "var(--os-surface3)",
+      border: `1.5px solid ${filled ? "var(--os-accent)" : "rgba(255,255,255,0.08)"}`,
+      transition: "all 0.18s cubic-bezier(.34,1.56,.64,1)",
+      transform: filled ? "scale(1.15)" : "scale(0.9)",
+      boxShadow: filled ? "0 0 10px rgba(108,99,255,0.5)" : "none",
+      animation: animating && !filled ? "os-pulse-dot 1.2s ease infinite" : "none",
+    }} />
+  );
+}
+
+/* ─────────────────────────────────────────────────────────
+   SUB-COMPONENT: NumKey
+───────────────────────────────────────────────────────── */
+function NumKey({ label, icon, onClick, variant = "default" }) {
+  const [pressed, setPressed] = useState(false);
+
+  const handleClick = () => {
+    setPressed(true);
+    setTimeout(() => setPressed(false), 150);
+    onClick();
+  };
+
+  const bg = {
+    default: "var(--os-surface2)",
+    accent:  "var(--os-accent)",
+    ghost:   "transparent",
+  }[variant];
+
+  return (
+    <button
+      onClick={handleClick}
+      style={{
+        background: bg,
+        border: variant === "ghost"
+          ? "1.5px solid var(--os-border2)"
+          : "1.5px solid var(--os-border)",
+        borderRadius: "var(--os-r-md)",
+        padding: "16px 0",
+        fontSize: icon ? 16 : 20,
+        fontWeight: 500,
+        color: variant === "accent" ? "#fff" : "var(--os-text)",
+        transition: "all 0.12s",
+        transform: pressed ? "scale(0.92)" : "scale(1)",
+        width: "100%",
+      }}
+    >
+      {icon ? <i className={`fas ${icon}`} /> : label}
+    </button>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────
+   VIEW: Login
+───────────────────────────────────────────────────────── */
+function LoginView({ onLogin, onGuest }) {
+  const [pin, setPin] = useState("");
+  const [shake, setShake] = useState(false);
+  const [error, setError] = useState("");
+
+  const pushDigit = (d) => {
+    if (pin.length < 4) setPin((p) => p + d);
+  };
+
+  const del = () => setPin((p) => p.slice(0, -1));
+
+  const confirm = () => {
+    if (pin === PIN_CORRECT) {
+      onLogin({ name: "Utilisateur" });
+    } else {
+      setShake(true);
+      setError("Code incorrect");
+      setPin("");
+      setTimeout(() => { setShake(false); setError(""); }, 600);
+    }
+  };
+
+  const keys = [
+    { label: "1", d: "1" }, { label: "2", d: "2" }, { label: "3", d: "3" },
+    { label: "4", d: "4" }, { label: "5", d: "5" }, { label: "6", d: "6" },
+    { label: "7", d: "7" }, { label: "8", d: "8" }, { label: "9", d: "9" },
+    { label: null, icon: "fa-delete-left", action: del, variant: "ghost" },
+    { label: "0", d: "0" },
+    { label: null, icon: "fa-check", action: confirm, variant: "accent" },
+  ];
+
+  return (
+    <div className="os-fadein" style={{
+      minHeight: "100vh",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      background: "radial-gradient(ellipse at 50% 30%, rgba(108,99,255,0.12) 0%, var(--os-bg) 65%)",
+      padding: "1.5rem",
+    }}>
+      <div style={{ width: "100%", maxWidth: 280 }}>
+
+        {/* Avatar */}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "1.5rem" }}>
+          <div style={{
+            width: 60, height: 60, borderRadius: "50%",
+            background: "var(--os-surface2)",
+            border: "1px solid rgba(108,99,255,0.2)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 24, color: "var(--os-accent)",
+            boxShadow: "0 0 20px rgba(108,99,255,0.1)",
+          }}>
+            <i className="fas fa-user-shield" />
           </div>
-          
-          {/* Titre */}
-          <h1 className="text-2xl font-bold text-center mb-2"
-              style={{ color: colors.text }}>
-            Bienvenue
-          </h1>
-          <p className="text-center mb-6"
-             style={{ color: colors.textMuted }}>
-            Entrez votre code PIN pour continuer
-          </p>
-          
-          {/* Formulaire */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <input
-                type="password"
-                placeholder="Code PIN"
-                value={pin}
-                onChange={(e) => setPin(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border-none outline-none text-center"
-                style={{
-                  backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.5)',
-                  color: colors.text
-                }}
-                maxLength={10}
-              />
-            </div>
-            
-            {error && (
-              <p className="text-center text-sm"
-                 style={{ color: colors.error }}>
-                {error}
-              </p>
-            )}
-            
-            <button
-              type="submit"
-              disabled={isLoading || !pin}
-              className="w-full py-3 rounded-xl font-medium transition-all"
-              style={{
-                backgroundColor: colors.accent,
-                color: 'white',
-                opacity: (isLoading || !pin) ? 0.5 : 1
-              }}
-            >
-              {isLoading ? 'Connexion...' : 'Se connecter'}
-            </button>
-          </form>
-          
-          {/* Option invité */}
-          <div className="mt-6 text-center">
-            <button
-              onClick={onGuestLogin}
-              className="text-sm underline"
-              style={{ color: colors.textMuted }}
-            >
-              Continuer en tant qu'invité
-            </button>
-          </div>
-          
-          {/* Indication PIN */}
-          <p className="text-center text-xs mt-4"
-             style={{ color: colors.textMuted }}>
-            PIN par défaut : 1234 ou admin
-          </p>
+        </div>
+
+        {/* Title */}
+        <h1 style={{ textAlign: "center", fontSize: 18, fontWeight: 500, marginBottom: 4 }}>
+          Bienvenue
+        </h1>
+        <p style={{ textAlign: "center", fontSize: 11, color: "var(--os-text2)", marginBottom: "1.5rem" }}>
+          Entrez votre code PIN pour continuer
+        </p>
+
+        {/* PIN dots */}
+        <div className={shake ? "os-shake" : ""} style={{
+          display: "flex", justifyContent: "center", gap: 16, marginBottom: "0.75rem",
+        }}>
+          {[0, 1, 2, 3].map((i) => (
+            <PinDot key={i} filled={i < pin.length} animating={pin.length === 0} />
+          ))}
+        </div>
+
+        {/* Error */}
+        <p style={{
+          textAlign: "center", fontSize: 12,
+          color: "#F87171",
+          minHeight: 20, marginBottom: "1.5rem",
+          transition: "opacity 0.2s",
+          opacity: error ? 1 : 0,
+        }}>
+          {error || " "}
+        </p>
+
+        {/* Numpad */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+          {keys.map((k, idx) => (
+            <NumKey
+              key={idx}
+              label={k.label}
+              icon={k.icon}
+              variant={k.variant || "default"}
+              onClick={k.action || (() => pushDigit(k.d))}
+            />
+          ))}
         </div>
       </div>
     </div>
   );
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   LISTE D'APPLICATIONS SIMPLE
-═══════════════════════════════════════════════════════════════════════════ */
-function AppList({ user, colors, onAppClick, onLogout, appsData }) {
-  const [currentDate, setCurrentDate] = useState(formatDate(new Date()));
-  
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentDate(formatDate(new Date()));
-    }, 60000); // Mettre à jour chaque minute
-    
-    return () => clearInterval(interval);
-  }, []);
-  
+/* ─────────────────────────────────────────────────────────
+   SUB-COMPONENT: AppTile (grille complète)
+───────────────────────────────────────────────────────── */
+function AppTile({ app, onClick, size = "md" }) {
+  const [hovered, setHovered] = useState(false);
+  const iconClass = getAppIcon(app);
+  const iconSize = size === "lg" ? 26 : size === "sm" ? 16 : 20;
+  const tileSize = size === "lg" ? 72 : size === "sm" ? 44 : 56;
+  const nameSize = size === "sm" ? 11 : 12;
+
   return (
-    <div className="min-h-screen p-6" style={{ backgroundColor: colors.bg }}>
-      {/* Header simple avec date et déconnexion */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl"
-               style={{ backgroundColor: colors.accent, color: 'white' }}>
-            {user.avatar}
+    <div
+      onClick={() => onClick(app)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: size === "sm" ? 5 : 8,
+        cursor: "pointer",
+        padding: size === "sm" ? "8px 4px" : "12px 8px",
+        borderRadius: "var(--os-r-md)",
+        background: hovered ? "var(--os-surface2)" : "transparent",
+        transition: "background 0.15s, transform 0.15s",
+        transform: hovered ? "translateY(-2px)" : "none",
+        userSelect: "none",
+      }}
+    >
+      <div style={{
+        width: tileSize, height: tileSize,
+        borderRadius: size === "lg" ? "var(--os-r-lg)" : "var(--os-r-md)",
+        background: hexToRgba(app.color, 0.12),
+        border: `1.5px solid ${hexToRgba(app.color, hovered ? 0.35 : 0.18)}`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        color: app.color,
+        fontSize: iconSize,
+        transition: "all 0.15s",
+        boxShadow: hovered ? `0 4px 20px ${hexToRgba(app.color, 0.25)}` : "none",
+      }}>
+        <i className={`fas ${iconClass}`} />
+      </div>
+      <span style={{
+        fontSize: nameSize,
+        fontWeight: 500,
+        color: hovered ? "var(--os-text)" : "var(--os-text2)",
+        textAlign: "center",
+        lineHeight: 1.3,
+        maxWidth: tileSize + 16,
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
+        transition: "color 0.15s",
+      }}>
+        {app.nom}
+      </span>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────
+   SUB-COMPONENT: RecentCard (historique)
+───────────────────────────────────────────────────────── */
+function RecentCard({ entry, onClick }) {
+  const [hovered, setHovered] = useState(false);
+  const iconClass = getAppIcon(entry);
+
+  return (
+    <div
+      onClick={() => onClick(entry)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        padding: "12px 14px",
+        borderRadius: "var(--os-r-md)",
+        background: hovered ? "var(--os-surface2)" : "var(--os-surface)",
+        border: `1px solid ${hovered ? hexToRgba(entry.color, 0.2) : "var(--os-border)"}`,
+        cursor: "pointer",
+        transition: "all 0.15s",
+        flexShrink: 0,
+        minWidth: 180,
+      }}
+    >
+      <div style={{
+        width: 38, height: 38,
+        borderRadius: "var(--os-r-sm)",
+        background: hexToRgba(entry.color, 0.12),
+        display: "flex", alignItems: "center", justifyContent: "center",
+        color: entry.color,
+        fontSize: 16,
+        flexShrink: 0,
+      }}>
+        <i className={`fas ${iconClass}`} />
+      </div>
+      <div style={{ overflow: "hidden" }}>
+        <div style={{ fontSize: 13, fontWeight: 500, color: "var(--os-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          {entry.nom}
+        </div>
+        <div style={{ fontSize: 11, color: "var(--os-text3)", marginTop: 2 }}>
+          {timeAgo(entry.openedAt)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────
+   SUB-COMPONENT: SearchBar
+───────────────────────────────────────────────────────── */
+function SearchBar({ value, onChange }) {
+  return (
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      background: "var(--os-surface)",
+      border: "1px solid var(--os-border)",
+      borderRadius: 99,
+      padding: "10px 18px",
+    }}>
+      <i className="fas fa-magnifying-glass" style={{ color: "var(--os-text3)", fontSize: 13 }} />
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Rechercher…"
+        style={{
+          flex: 1,
+          background: "none",
+          border: "none",
+          fontSize: 14,
+          color: "var(--os-text)",
+          caretColor: "var(--os-accent)",
+        }}
+      />
+      {value && (
+        <button onClick={() => onChange("")} style={{ color: "var(--os-text3)", fontSize: 12 }}>
+          <i className="fas fa-xmark" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────
+   SUB-COMPONENT: SectionLabel
+───────────────────────────────────────────────────────── */
+function SectionLabel({ children, action }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+      <span style={{ fontSize: 10.5, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--os-text3)" }}>
+        {children}
+      </span>
+      {action}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────
+   VIEW: Home (recent + all apps)
+───────────────────────────────────────────────────────── */
+function HomeView({ apps, history, onAppClick, onClearHistory, onLogout }) {
+  const [query, setQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("home"); // "home" | "all"
+
+  const filteredApps = useMemo(() => {
+    if (!query) return apps;
+    const q = query.toLowerCase();
+    return apps.filter((a) => a.nom.toLowerCase().includes(q));
+  }, [apps, query]);
+
+  // Deduplicated recent apps (most recent per url)
+  const recentUniq = useMemo(() => {
+    const seen = new Set();
+    return history.filter((h) => {
+      if (seen.has(h.url)) return false;
+      seen.add(h.url);
+      return true;
+    }).slice(0, 8);
+  }, [history]);
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      {/* ── TOP HEADER ── */}
+      <div style={{
+        padding: "0.75rem 1rem",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        borderBottom: "1px solid var(--os-border)",
+        background: "var(--os-surface)",
+        position: "sticky",
+        top: 0,
+        zIndex: 10,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{
+            width: 28, height: 28, borderRadius: "50%",
+            background: "var(--os-surface2)",
+            border: "1px solid rgba(108,99,255,0.2)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 11, color: "var(--os-accent)",
+          }}>
+            <i className="fas fa-user" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold" style={{ color: colors.text }}>
-              {user.name}
-            </h1>
-            <p className="text-sm" style={{ color: colors.textMuted }}>
-              {currentDate}
-            </p>
+            <div style={{ fontSize: 12, fontWeight: 500 }}>Utilisateur</div>
+            <div style={{ fontSize: 10, color: "var(--os-text3)", textTransform: "capitalize" }}>{dateStr}</div>
           </div>
         </div>
-        
-        <button
-          onClick={onLogout}
-          className="px-4 py-2 rounded-lg font-medium transition-all hover:bg-red-500/20"
-          style={{ color: colors.error }}
-        >
-          <i className="fas fa-sign-out-alt mr-2"></i>
-          Déconnexion
-        </button>
-      </div>
-      
-      {/* Grille d'applications */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {appsData.map(app => (
-          <div
-            key={app.id}
-            className="p-6 rounded-xl cursor-pointer transition-all hover:scale-105 hover:shadow-lg"
+
+        <div style={{ display: "flex", gap: 6 }}>
+          <button
+            onClick={onLogout}
             style={{
-              backgroundColor: colors.surface,
-              border: `2px solid ${colors.border}`
+              background: "var(--os-surface2)",
+              border: "1px solid var(--os-border)",
+              borderRadius: "6px",
+              padding: "5px 8px",
+              fontSize: 10,
+              color: "#F87171",
+              display: "flex", alignItems: "center", gap: 4,
             }}
-            onClick={() => onAppClick(app)}
           >
-            <div className="flex flex-col items-center text-center space-y-3">
-              <div className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl"
-                   style={{ backgroundColor: `${app.color}20`, color: app.color }}>
-                <i className={app.icon}></i>
-              </div>
-              <div>
-                <h3 className="font-semibold text-sm" style={{ color: colors.text }}>
-                  {app.name}
-                </h3>
-                <p className="text-xs mt-1" style={{ color: colors.textMuted }}>
-                  {app.category}
-                </p>
-              </div>
-            </div>
-          </div>
+            <i className="fas fa-right-from-bracket" />
+          </button>
+        </div>
+      </div>
+
+      {/* ── NAV TABS ── */}
+      <div style={{
+        display: "flex",
+        gap: 3,
+        padding: "0.75rem 1rem 0",
+      }}>
+        {[
+          { id: "home", icon: "fa-house",        label: "Accueil" },
+          { id: "all",  icon: "fa-border-all",   label: "Applications" },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            style={{
+              display: "flex", alignItems: "center", gap: 5,
+              padding: "6px 12px",
+              borderRadius: 99,
+              fontSize: 11,
+              fontWeight: 500,
+              color: activeTab === tab.id ? "#fff" : "var(--os-text2)",
+              background: activeTab === tab.id ? "var(--os-accent)" : "transparent",
+              border: "none",
+              transition: "all 0.15s",
+            }}
+          >
+            <i className={`fas ${tab.icon}`} style={{ fontSize: 10 }} />
+            {tab.label}
+          </button>
         ))}
       </div>
+
+      {/* ── CONTENT ── */}
+      <div className="os-fadein" style={{ flex: 1, padding: "1rem 1rem", overflow: "auto" }}>
+
+        {activeTab === "home" && (
+          <>
+            {/* Recent section */}
+            {recentUniq.length > 0 && (
+              <div style={{ marginBottom: "2rem" }}>
+                <SectionLabel
+                  action={
+                    <button
+                      onClick={onClearHistory}
+                      style={{ fontSize: 11, color: "var(--os-text3)", textDecoration: "underline" }}
+                    >
+                      Effacer
+                    </button>
+                  }
+                >
+                  Récemment ouverts
+                </SectionLabel>
+
+                <div style={{
+                  display: "flex",
+                  gap: 10,
+                  overflowX: "auto",
+                  paddingBottom: 6,
+                }}>
+                  {recentUniq.map((h, i) => (
+                    <RecentCard
+                      key={`${h.url}-${i}`}
+                      entry={h}
+                      onClick={(entry) => {
+                        const app = apps.find((a) => a.url === entry.url);
+                        if (app) onAppClick(app);
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Quick apps */}
+            <div>
+              <SectionLabel>
+                Applications
+              </SectionLabel>
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(76px, 1fr))",
+                gap: 4,
+              }}>
+                {apps.slice(0, 10).map((app) => (
+                  <AppTile key={app.url} app={app} onClick={onAppClick} size="md" />
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        {activeTab === "all" && (
+          <>
+            <div style={{ marginBottom: "1.25rem" }}>
+              <SearchBar value={query} onChange={setQuery} />
+            </div>
+
+            {query && (
+              <p style={{ fontSize: 12, color: "var(--os-text3)", marginBottom: "1rem" }}>
+                {filteredApps.length} résultat{filteredApps.length !== 1 ? "s" : ""} pour « {query} »
+              </p>
+            )}
+
+            {!query && (
+              <div style={{ marginBottom: "2rem" }}>
+                <SectionLabel>Toutes les applications</SectionLabel>
+              </div>
+            )}
+
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))",
+              gap: 4,
+            }}>
+              {filteredApps.map((app) => (
+                <AppTile key={app.url} app={app} onClick={onAppClick} size="md" />
+              ))}
+              {filteredApps.length === 0 && (
+                <div style={{
+                  gridColumn: "1/-1",
+                  textAlign: "center",
+                  padding: "3rem 1rem",
+                  color: "var(--os-text3)",
+                  fontSize: 14,
+                }}>
+                  <i className="fas fa-magnifying-glass" style={{ fontSize: 28, marginBottom: 12, display: "block" }} />
+                  Aucune application trouvée
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   BOUTON FLOTTANT SIMPLE AVEC MODAL
-═══════════════════════════════════════════════════════════════════════════ */
-function FloatingButton({ colors, onShowAppList, user, onLogout, appsData }) {
-  const [isOpen, setIsOpen] = useState(false);
-  
-  const handleShowAppList = () => {
-    setIsOpen(false);
-    onShowAppList();
-  };
-  
+/* ─────────────────────────────────────────────────────────
+   VIEW: App Page
+───────────────────────────────────────────────────────── */
+function AppView({ app, onBack }) {
+  const iconClass = getAppIcon(app);
+  const isJSFile = app.url && (app.url.endsWith(".js") || app.url.endsWith(".jsx") || app.url.endsWith(".mjs"));
+  const isURL = app.url && (app.url.startsWith("http://") || app.url.startsWith("https://"));
+
   return (
-    <>
-      {/* Bouton flottant */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 z-40"
-        style={{
-          backgroundColor: colors.accent,
-          color: 'white',
-          boxShadow: `0 8px 32px ${colors.accent}40`
-        }}
-      >
-        <i className="fas fa-th-large text-xl"></i>
-      </button>
-      
-      {/* Modal */}
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setIsOpen(false)}
-          />
-          
-          {/* Modal contenu */}
-          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[80vh]"
-               style={{ 
-                 backgroundColor: colors.surface,
-                 border: `1px solid ${colors.border}`
-               }}>
-            {/* Header */}
-            <div className="p-4 border-b"
-                 style={{ 
-                   backgroundColor: colors.bg,
-                   borderColor: colors.border,
-                   color: colors.text
-                 }}>
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold">Applications</h3>
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="p-2 rounded-lg transition-all hover:bg-red-500/20"
-                  style={{ color: colors.error }}
-                >
-                  <i className="fas fa-times"></i>
-                </button>
-              </div>
-            </div>
-            
-            {/* Contenu */}
-            <div className="p-4 space-y-4 overflow-auto max-h-[60vh]">
-              {/* User info */}
-              <div className="flex items-center gap-3 p-3 rounded-lg"
-                   style={{ backgroundColor: colors.bg }}>
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl"
-                     style={{ backgroundColor: colors.accent, color: 'white' }}>
-                  {user.avatar}
-                </div>
-                <div>
-                  <p className="font-medium" style={{ color: colors.text }}>{user.name}</p>
-                  <p className="text-sm" style={{ color: colors.textMuted }}>Utilisateur connecté</p>
-                </div>
-              </div>
-              
-              {/* Bouton voir toutes les apps */}
-              <button
-                onClick={handleShowAppList}
-                className="w-full p-3 rounded-lg text-left transition-all hover:bg-white/10 flex items-center gap-3"
-                style={{ color: colors.text }}
-              >
-                <i className="fas fa-th"></i>
-                Voir toutes les applications
-              </button>
-              
-              {/* Déconnexion */}
-              <button
-                onClick={onLogout}
-                className="w-full p-3 rounded-lg text-left transition-all hover:bg-red-500/20 flex items-center gap-3"
-                style={{ color: colors.error }}
-              >
-                <i className="fas fa-sign-out-alt"></i>
-                Se déconnecter
-              </button>
-            </div>
+    <div className="os-fadein" style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      {/* Header */}
+      <div style={{
+        display: "flex", alignItems: "center", gap: 8,
+        padding: "0.75rem 1rem",
+        background: "var(--os-surface)",
+        borderBottom: "1px solid var(--os-border)",
+        position: "sticky", top: 0, zIndex: 10,
+      }}>
+        <button
+          onClick={onBack}
+          style={{
+            width: 28, height: 28,
+            borderRadius: "6px",
+            background: "var(--os-surface2)",
+            border: "1px solid var(--os-border)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: "var(--os-text2)", fontSize: 11,
+          }}
+        >
+          <i className="fas fa-chevron-left" />
+        </button>
+
+        <div style={{
+          width: 24, height: 24,
+          borderRadius: 6,
+          background: hexToRgba(app.color, 0.15),
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: app.color, fontSize: 11,
+        }}>
+          <i className={`fas ${iconClass}`} />
+        </div>
+
+        <span style={{ fontSize: 13, fontWeight: 500 }}>{app.nom}</span>
+      </div>
+
+      {/* Content */}
+      {isURL ? (
+        <iframe
+          src={app.url}
+          title={app.nom}
+          style={{ flex: 1, border: "none", width: "100%", minHeight: "calc(100vh - 60px)" }}
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+        />
+      ) : (
+        <div style={{
+          flex: 1,
+          display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center",
+          padding: "1.5rem",
+          gap: "1rem",
+        }}>
+          <div style={{
+            width: 70, height: 70,
+            borderRadius: "var(--os-r-lg)",
+            background: hexToRgba(app.color, 0.1),
+            border: `1px solid ${hexToRgba(app.color, 0.2)}`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: app.color, fontSize: 28,
+            boxShadow: `0 0 25px ${hexToRgba(app.color, 0.1)}`,
+          }}>
+            <i className={`fas ${iconClass}`} />
           </div>
+
+          <div style={{ textAlign: "center" }}>
+            <h2 style={{ fontSize: 18, fontWeight: 500, marginBottom: 6 }}>{app.nom}</h2>
+            <p style={{ fontSize: 11, color: "var(--os-text2)", maxWidth: 240, lineHeight: 1.5 }}>
+              {isJSFile
+                ? `Chargement du module ${app.url} en cours…`
+                : "Cette application est en cours de développement."}
+            </p>
+          </div>
+
+          <div style={{
+            background: "var(--os-surface2)",
+            border: "1px solid var(--os-border)",
+            borderRadius: "6px",
+            padding: "8px 12px",
+            fontSize: 10,
+            color: "var(--os-text3)",
+            fontFamily: "monospace",
+            maxWidth: 280,
+            wordBreak: "break-all",
+            textAlign: "center",
+          }}>
+            {app.url}
+          </div>
+
+          <button
+            onClick={onBack}
+            style={{
+              background: "var(--os-surface2)",
+              border: "1px solid var(--os-border)",
+              borderRadius: 99,
+              padding: "8px 20px",
+              fontSize: 11, fontWeight: 500,
+              color: "var(--os-text)",
+              display: "flex", alignItems: "center", gap: 6,
+            }}
+          >
+            <i className="fas fa-arrow-left" /> Retour
+          </button>
         </div>
       )}
-    </>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   PAGE D'APPLICATION
-═══════════════════════════════════════════════════════════════════════════ */
-function AppPage({ app, colors, theme, user, onBack, onLogout, toggleTheme }) {
-  // Si c'est une app iframe, on affiche directement l'iframe
-  if (app.url) {
-    return (
-      <div className="min-h-screen" style={{ backgroundColor: colors.bg }}>
-        {/* Header simple pour les apps iframe */}
-        <div className="flex items-center justify-between p-4 border-b"
-             style={{ 
-               backgroundColor: colors.surface,
-               borderColor: colors.border,
-               color: colors.text
-             }}>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onBack}
-              className="p-2 rounded-lg transition-all hover:bg-white/10"
-            >
-              <i className="fas fa-arrow-left"></i>
-            </button>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded flex items-center justify-center text-xs"
-                   style={{ backgroundColor: app.color, color: 'white' }}>
-                <i className={app.icon}></i>
-              </div>
-              <span className="font-medium">{app.name}</span>
-            </div>
-          </div>
-        </div>
-        
-        {/* Contenu de l'application */}
-        <div className="h-[calc(100vh-73px)]">
-          {app.url && (app.url.endsWith('.js') || app.url.endsWith('.mjs') || app.url.endsWith('.jsx')) ? (
-            <web-app url={app.url} />
-          ) : (
-            <iframe
-              src={app.url}
-              className="w-full h-full border-0"
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-              style={{ backgroundColor: 'white' }}
-            />
-          )}
-        </div>
-      </div>
-    );
-  }
-  
-  // Pour les apps React, on affiche un contenu simple
-  return (
-    <div className="min-h-screen" style={{ backgroundColor: colors.bg }}>
-      <FloatingButton
-        colors={colors}
-        onShowAppList={onBack}
-        user={user}
-        onLogout={onLogout}
-      />
-      
-      {/* Contenu de l'application */}
-      <div className="p-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold" style={{ color: colors.text }}>
-              {app.name}
-            </h1>
-            <p className="mt-2" style={{ color: colors.textMuted }}>
-              {app.category}
-            </p>
-          </div>
-          
-          {/* Contenu de l'application */}
-          <div className="p-8 rounded-xl text-center"
-               style={{ 
-                 backgroundColor: colors.surface,
-                 border: `1px solid ${colors.border}`
-               }}>
-            <div className="w-16 h-16 rounded-xl flex items-center justify-center text-3xl mx-auto mb-4"
-                 style={{ backgroundColor: `${app.color}20`, color: app.color }}>
-              <i className={app.icon}></i>
-            </div>
-            <h2 className="text-xl font-semibold mb-2" style={{ color: colors.text }}>
-              {app.name}
-            </h2>
-            <p style={{ color: colors.textMuted }}>
-              Application en cours de développement...
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
+/* ─────────────────────────────────────────────────────────
    COMPOSANT PRINCIPAL
-═══════════════════════════════════════════════════════════════════════════ */
-export default function MinimalOS({ apps }) {
-  const { theme, colors, toggleTheme } = useTheme();
-  const [currentView, setCurrentView] = useState('login');
+───────────────────────────────────────────────────────── */
+export default function App({ apps: appsProp }) {
+  useFontAwesome();
+  useGlobalCSS();
+
+  const apps = useMemo(() => {
+    if (!appsProp) return DEFAULT_APPS;
+    if (typeof appsProp === "string") {
+      try { return JSON.parse(appsProp); } catch { return DEFAULT_APPS; }
+    }
+    if (Array.isArray(appsProp) && appsProp.length > 0) return appsProp;
+    return DEFAULT_APPS;
+  }, [appsProp]);
+
+  const { history, recordOpen, clearHistory } = useAppHistory();
+
+  const [view, setView] = useState("login");   // "login" | "home" | "app"
   const [currentApp, setCurrentApp] = useState(null);
-  const [user, setUser] = useState(null);
-  
-  // Gérer les apps en props (JSON string ou objet)
-  const appsData = React.useMemo(() => {
-    if (!apps) {
-      return APPS_DATA; // Utiliser les apps par défaut si aucune prop fournie
-    }
-    
-    // Si c'est une chaîne JSON, la parser
-    if (typeof apps === 'string') {
-      try {
-        return JSON.parse(apps);
-      } catch (error) {
-        console.error('Erreur lors du parsing JSON des apps:', error);
-        return APPS_DATA; // Retourner les apps par défaut en cas d'erreur
-      }
-    }
-    
-    // Si c'est déjà un objet, l'utiliser directement
-    if (Array.isArray(apps)) {
-      return apps;
-    }
-    
-    // Format non reconnu, utiliser les apps par défaut
-    console.warn('Format des apps non reconnu, utilisation des apps par défaut');
-    return APPS_DATA;
-  }, [apps]);
-  
-  const handleLogin = (userData) => {
-    setUser(userData);
-    setCurrentView('home');
-  };
-  
-  const handleLogout = () => {
-    setUser(null);
-    setCurrentView('login');
-    setCurrentApp(null);
-  };
-  
-  const handleGuestLogin = () => {
-    setUser({ name: 'Invité', avatar: '👤' });
-    setCurrentView('home');
-  };
-  
-  const handleAppClick = (app) => {
-    console.log('Opening app:', app.name);
-    if (app.url) {
-      console.log('App URL:', app.url);
-    }
+
+  const handleLogin = useCallback(() => setView("home"), []);
+  const handleGuest = useCallback(() => setView("home"), []);
+  const handleLogout = useCallback(() => { setView("login"); setCurrentApp(null); }, []);
+
+  const handleAppClick = useCallback((app) => {
+    recordOpen(app);
     setCurrentApp(app);
-    setCurrentView('app');
-  };
-  
-  const handleBackToHome = () => {
-    setCurrentView('home');
-    setCurrentApp(null);
-  };
-  
-  // Rendu conditionnel selon la vue actuelle
-  if (currentView === 'login') {
-    return <LoginScreen onLogin={handleLogin} onGuestLogin={handleGuestLogin} colors={colors} theme={theme} />;
-  }
-  
-  if (currentView === 'app' && currentApp) {
-    return (
-      <>
-        <AppPage
-          app={currentApp}
-          colors={colors}
-          theme={theme}
-          user={user}
-          onBack={handleBackToHome}
-          onLogout={handleLogout}
-          toggleTheme={toggleTheme}
-        />
-        <FloatingButton
-          colors={colors}
-          onShowAppList={handleBackToHome}
-          user={user}
-          onLogout={handleLogout}
-          appsData={appsData}
-        />
-      </>
-    );
-  }
-  
+    setView("app");
+  }, [recordOpen]);
+
+  const handleBack = useCallback(() => { setView("home"); setCurrentApp(null); }, []);
+
   return (
-    <>
-      <AppList
-        user={user}
-        colors={colors}
-        onAppClick={handleAppClick}
-        onLogout={handleLogout}
-        appsData={appsData}
-      />
-    </>
+    <div className="os-root">
+      {view === "login" && (
+        <LoginView onLogin={handleLogin} onGuest={handleGuest} />
+      )}
+      {view === "home" && (
+        <HomeView
+          apps={apps}
+          history={history}
+          onAppClick={handleAppClick}
+          onClearHistory={clearHistory}
+          onLogout={handleLogout}
+        />
+      )}
+      {view === "app" && currentApp && (
+        <AppView app={currentApp} onBack={handleBack} />
+      )}
+    </div>
   );
 }

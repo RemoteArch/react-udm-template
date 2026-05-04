@@ -5,10 +5,22 @@
     <title>React UDM Template</title>
     <!-- <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script> -->
-    
-    <script src="./assets/js/tailwind.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
         window.local = true
+        document.addEventListener('DOMContentLoaded', () => {
+            const webApp = document.querySelector('web-app');
+            function handleHashChange() {
+                const hash = window.location.hash.replace('#', '');
+                if (hash) {
+                    webApp.setAttribute('url', `components/${hash}.jsx`);
+                }else{
+                    webApp.setAttribute('url', `app.jsx`);
+                }
+            }
+            window.addEventListener('hashchange', handleHashChange);
+            handleHashChange();
+        });
     </script>
 </head>
 <body class="h-screen">
