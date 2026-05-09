@@ -435,7 +435,7 @@ const ZipModal = ({ selectedItems, currentPath, onZip, onClose }) => {
 };
 
 const UnzipModal = ({ selectedItem, currentPath, onUnzip, onClose }) => {
-  const [dest, setDest] = useState(currentPath);
+  const [dest, setDest] = useState(currentPath || '/');
   const [loading, setLoading] = useState(false);
 
   const handleConfirm = async () => {
@@ -928,6 +928,19 @@ const Icons = {
       <polyline points="14 2 14 8 20 8" />
       <path d="M12 12v6" />
       <path d="m15 15-3 3-3-3" />
+    </svg>
+  ),
+  Lock: ({ className = "w-5 h-5" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  ),
+  Logout: ({ className = "w-5 h-5" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16,17 21,12 16,7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
     </svg>
   ),
   ChevronRight: ({ className = "w-4 h-4" }) => (
@@ -1591,20 +1604,8 @@ const FileManager = ({ baseUrl = '', className = '', auth = null }) => {
   );
 };
 
-const FileManagers = ({apiurl}) => {
+const SourceList = ({onLogout})=>{
   
-  if(apiurl && apiurl != ''){
-    return (
-      <div className="h-screen animate-in fade-in duration-500">
-          <FileManager 
-            key={`${apiurl}`} 
-            baseUrl={apiurl} 
-            auth={null}
-          />
-      </div>
-    )
-  }
-
   // --- Logique d'état et Persistance ---
   const [sources, setSources] = React.useState(() => {
     const saved = localStorage.getItem('fileManagerUrls');
@@ -1810,6 +1811,17 @@ const FileManagers = ({apiurl}) => {
             className="hidden"
           />
         </label>
+
+        {/* Bouton Déconnexion */}
+        {onLogout && (
+          <button
+            onClick={onLogout}
+            className="ml-2 p-2 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-red-400 hover:text-red-300 border border-red-600/20 transition-all active:scale-95"
+            title="Se déconnecter"
+          >
+            <Icons.Logout size={18} />
+          </button>
+        )}
       </div>
 
       {/* --- ZONE DE CONTENU --- */}
@@ -1956,6 +1968,167 @@ const FileManagers = ({apiurl}) => {
       </Modal>
     </div>
   );
+}
+
+// PIN par défaut avec 8 chiffres désordonnés
+const DEFAULT_PIN = '92741836';
+
+const Login = ({ onLogin }) => {
+  const [pin, setPin] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    // Simulation de vérification du PIN
+    setTimeout(() => {
+      if (pin === DEFAULT_PIN) {
+        onLogin({ authenticated: true, pin });
+      } else {
+        setError('PIN incorrect');
+        setIsLoading(false);
+      }
+    }, 1000);
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#0F1117]">
+      <div className="max-w-md w-full space-y-8 p-8">
+        <div className="text-center">
+          <div className="mx-auto h-16 w-16 rounded-full bg-blue-600/20 flex items-center justify-center mb-6">
+            <Icons.Lock className="h-8 w-8 text-blue-400" />
+          </div>
+          <h2 className="text-3xl font-bold text-white mb-2">
+            File Manager
+          </h2>
+          <p className="text-gray-400">
+            Entrez votre code PIN pour accéder
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label htmlFor="pin" className="sr-only">
+              Code PIN
+            </label>
+            <input
+              id="pin"
+              name="pin"
+              type="password"
+              required
+              maxLength={8}
+              value={pin}
+              onChange={(e) => setPin(e.target.value)}
+              className="appearance-none relative block w-full px-4 py-3 border border-gray-700 placeholder-gray-500 text-white bg-gray-800/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-2xl tracking-widest"
+              placeholder={"•".repeat(DEFAULT_PIN.length)}
+              disabled={isLoading}
+            />
+          </div>
+
+          {error && (
+            <div className="text-red-400 text-sm text-center bg-red-900/20 border border-red-900/30 rounded-lg px-4 py-2">
+              {error}
+            </div>
+          )}
+
+          <div>
+            <button
+              type="submit"
+              disabled={isLoading || !pin}
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              {isLoading ? (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Vérification...
+                </div>
+              ) : (
+                'Se connecter'
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 };
 
-export default FileManagers;
+const FileManagers = ({apiurl}) => {
+  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  // Vérifier l'authentification au chargement
+  React.useEffect(() => {
+    const checkAuth = () => {
+      const lastAuth = localStorage.getItem('file-manager-last-auth');
+      const now = new Date().getTime();
+      
+      if (!lastAuth) {
+        setIsAuthenticated(false);
+        setIsLoading(false);
+        return;
+      }
+      
+      const lastAuthTime = parseInt(lastAuth);
+      const hoursSinceLastAuth = (now - lastAuthTime) / (1000 * 60 * 60);
+      
+      // Si plus de 24h, supprimer et demander nouvelle authentification
+      if (hoursSinceLastAuth > 24) {
+        localStorage.removeItem('file-manager-last-auth');
+        setIsAuthenticated(false);
+      } else {
+        setIsAuthenticated(true);
+      }
+      
+      setIsLoading(false);
+    };
+
+    checkAuth();
+  }, []);
+
+  const handleLogin = (userData) => {
+    // Enregistrer la date de connexion
+    localStorage.setItem('file-manager-last-auth', new Date().getTime().toString());
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('file-manager-last-auth');
+    setIsAuthenticated(false);
+  };
+
+  // État de chargement
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0F1117]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  // Non authentifié
+  if (!isAuthenticated) {
+    return <Login onLogin={handleLogin} onLogout={handleLogout} />;
+  }
+
+  // Authentifié - afficher le gestionnaire de fichiers
+  if(apiurl && apiurl != ''){
+    return (
+      <div className="h-screen animate-in fade-in duration-500">
+          <FileManager 
+            key={`${apiurl}`} 
+            baseUrl={apiurl} 
+            auth={null}
+          />
+      </div>
+    )
+  }
+  return (
+    <SourceList onLogout={handleLogout}/>
+  )
+};
+
+export default FileManagers
