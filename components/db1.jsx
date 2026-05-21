@@ -2,16 +2,14 @@ const { useState, useEffect, useCallback } = React;
 
 // ─── API LAYER ────────────────────────────────────────────────────────────────
 const API_URL   = "";
-const getToken  = () => "";
 
-async function api(method, action, params = {}, body = null) {
+async function api(method, params = {}, body = null) {
   const url = new URL(API_URL + action, window.location.href);
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
 
   const opts = {
     method,
     headers: {
-      "X-Manager-Token": getToken(),
       ...(body !== null ? { "Content-Type": "application/json" } : {}),
     },
     ...(body !== null ? { body: JSON.stringify(body) } : {}),
@@ -28,9 +26,9 @@ const API = {
   execute: (sql) => {
     // Check if sql is an array (multiple statements) or string (single statement)
     if (Array.isArray(sql)) {
-      return api("POST", "", {}, { sqls: sql });
+      return api("POST",{}, { sqls: sql });
     } else {
-      return api("POST", "", {}, { sql: sql });
+      return api("POST",{}, { sql: sql });
     }
   },
 
