@@ -4,7 +4,7 @@ const { useState, useEffect, useCallback } = React;
 const API_URL   = "";
 
 async function api(method, params = {}, body = null) {
-  const url = new URL(API_URL + action, window.location.href);
+  const url = new URL(API_URL, window.location.href);
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
 
   const opts = {
