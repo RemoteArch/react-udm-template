@@ -26,9 +26,9 @@ const API = {
   execute: (sql) => {
     // Check if sql is an array (multiple statements) or string (single statement)
     if (Array.isArray(sql)) {
-      return api("POST",{}, { sqls: sql });
+      return api("POST",{}, sql);
     } else {
-      return api("POST",{}, { sql: sql });
+      return api("POST",{}, [sql]);
     }
   },
 
