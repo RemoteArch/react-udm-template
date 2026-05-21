@@ -16,9 +16,10 @@ async function api(method, params = {}, body = null) {
   };
 
   const res  = await fetch(url.toString(), opts);
-  const data = await res.json();
+  let data = await res.json();
   if (!res.ok) throw new Error(data?.error || data?.message || `HTTP ${res.status}`);
-  return data;
+  data = data.data;
+  return Array.isArray(data) && data.length === 1 ? data[0] : data;
 }
 
 const API = {
@@ -43,13 +44,10 @@ const API = {
       // Lister toutes les tables avec leur structure
       return API.list().then(tables => {
         if (!tables.length) return [];
-        const promises = tables.map(t => 
-          API.execute(`DESCRIBE \`${t}\``).then(res => ({
-            table: t,
-            columns: res.data || []
-          }))
-        );
-        return Promise.all(promises).then(results => results.map(result => ({ ...result, columns: result.columns.map(col => ({ ...col, table: result.table })) })));
+        return API.execute(tables.map(t=>`DESCRIBE \`${t}\``)).
+        then((res) => {
+          return res.map((r,i)=>({table: tables[i] , columns:r.data}));
+        })
       });
     } else {
       // Structure d'une table spécifique
@@ -158,9 +156,12 @@ const API = {
 
   truncate: (table) => {
     // Exécuter chaque instruction séparément pour éviter les problèmes de multi-requêtes
-    return API.execute('SET FOREIGN_KEY_CHECKS = 0')
-      .then(() => API.execute(`TRUNCATE TABLE \`${table}\``))
-      .then(() => API.execute('SET FOREIGN_KEY_CHECKS = 1'));
+    const commands = [
+      'SET FOREIGN_KEY_CHECKS = 0',
+      `TRUNCATE TABLE \`${table}\``,
+      'SET FOREIGN_KEY_CHECKS = 1'
+    ];
+    return API.execute(commands);
   },
 
   initDb: (path) => {
@@ -498,9 +499,10 @@ function InitDbModal({ onClose, onDone, toast }) {
     try {
       // Découper les requêtes SQL en séparant par ; et en ignorant les commentaires
       const queries = sql
+        .replace(/^--.*$/gm, '')  // Retirer les lignes commençant par --
         .split(/;\s*\n/)
         .map(q => q.trim())
-        .filter(q => q && !q.startsWith('--') && !q.startsWith('#'));
+        .filter(q => q && !q.startsWith('#'));
       
       if (queries.length === 0) {
         toast.error("Aucune requête SQL valide trouvée");
@@ -509,10 +511,18 @@ function InitDbModal({ onClose, onDone, toast }) {
       
       const queryResults = [];
       
-      for (let i = 0; i < queries.length; i++) {
-        const query = queries[i];
-        try {
-          const result = await API.execute(query);
+      const results = await API.execute(queries);
+      
+      queries.forEach((query, i) => {
+        const result = results[i];
+        if (result.error) {
+          queryResults.push({
+            query,
+            success: false,
+            error: result.error,
+            message: `Erreur dans la requête ${i + 1}`
+          });
+        } else {
           queryResults.push({
             query,
             success: true,
@@ -520,16 +530,8 @@ function InitDbModal({ onClose, onDone, toast }) {
             message: result.message || `Requête ${i + 1} exécutée avec succès`,
             rowCount: result.data?.length || 0
           });
-        } catch (error) {
-          queryResults.push({
-            query,
-            success: false,
-            error: error.message,
-            message: `Erreur dans la requête ${i + 1}`
-          });
-          // Continuer avec les autres requêtes même si une échoue
         }
-      }
+      });
       
       setResults(queryResults);
       setShowResults(true);

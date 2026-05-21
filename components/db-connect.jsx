@@ -273,6 +273,15 @@ export default function Home() {
                           Connecter
                         </button>
                         <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(item.token);
+                          }}
+                          className="bg-gray-600/20 hover:bg-gray-600 text-gray-400 hover:text-white px-2 py-1.5 rounded-lg text-xs font-bold transition-all"
+                          title="Copier le token"
+                        >
+                          <i className="fas fa-copy text-[10px]"></i>
+                        </button>
+                        <button
                           onClick={() => deleteConfig(item.token)}
                           className="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white px-2 py-1.5 rounded-lg text-xs font-bold transition-all"
                           title="Supprimer cette configuration"
