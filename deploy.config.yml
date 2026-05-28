@@ -10,6 +10,8 @@ build:
 
 # Liste des déploiements
 deploy:
-  - url: https://cdn.pass.cm/file.php
-    localDir: ./dist
+  - url: https://example.com/file.php
+    localDir: ./
     remoteDir: /
+    paths: [file.ext , dir]
+    excludes: [file.ext , dir]
