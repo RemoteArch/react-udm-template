@@ -110,10 +110,10 @@ const FileItemList = ({ item, isSelected, onSelect, onOpen, onContextMenu }) => 
         {item.name}
       </div>
       <div className="w-24 text-right text-xs font-mono text-gray-500">
-        {item.isDir ? '-' : formatSize(item.size)}
+        {item.type == 'dir' ? '-' : formatSize(item.size)}
       </div>
       <div className="w-36 text-right text-xs font-mono text-gray-500">
-        {formatDate(item.modifiedAt)}
+        {item.type == 'dir' ? '-' : formatDate(item.mtime)}
       </div>
     </div>
   );
