@@ -2076,13 +2076,14 @@ const FileManagers = ({apiurl}) => {
       const hoursSinceLastAuth = (now - lastAuthTime) / (1000 * 60 * 60);
       
       // Si plus de 24h, supprimer et demander nouvelle authentification
-      if (hoursSinceLastAuth > 24) {
-        localStorage.removeItem('file-manager-last-auth');
-        setIsAuthenticated(false);
-      } else {
-        setIsAuthenticated(true);
-      }
+      // if (hoursSinceLastAuth > 24) {
+      //   localStorage.removeItem('file-manager-last-auth');
+      //   setIsAuthenticated(false);
+      //   setIsLoading(false);
+      //   return;
+      // }
       
+      setIsAuthenticated(true);
       setIsLoading(false);
     };
 
