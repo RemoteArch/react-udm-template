@@ -1,7 +1,7 @@
 const LOCAL = window.local == true;
-const REACT_URL = LOCAL ? "./assets/js/react.production.min.js" : "https://unpkg.com/react@18/umd/react.production.min.js"
-const REACT_DOM_URL = LOCAL ? "./assets/js/react-dom.production.min.js" : "https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
-const BABEL_URL = LOCAL ? "./assets/js/babel.min.js" : "https://unpkg.com/@babel/standalone/babel.min.js"
+const REACT_URL = LOCAL ? "./assets/js/react.production.min.js" : "https://cdn.jsdelivr.net/gh/remotearch/react-udm-template/assets/js/react.production.min.js"
+const REACT_DOM_URL = LOCAL ? "./assets/js/react-dom.production.min.js" : "https://cdn.jsdelivr.net/gh/remotearch/react-udm-template/assets/js/react-dom.production.min.js"
+const BABEL_URL = LOCAL ? "./assets/js/babel.min.js" : "https://cdn.jsdelivr.net/gh/remotearch/react-udm-template/assets/js/babel.min.js"
 
 const loadScript = (src) => {
   return new Promise((resolve, reject) => {
