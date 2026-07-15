@@ -61,9 +61,8 @@ export default function Home() {
       date: new Date().toLocaleDateString()
     });
 
-    const limitedHistory = newHistory.slice(0, 10);
-    localStorage.setItem('db_history', JSON.stringify(limitedHistory));
-    setHistory(limitedHistory);
+    localStorage.setItem('db_history', JSON.stringify(newHistory));
+    setHistory(newHistory);
   };
 
   const handleSubmit = (e) => {
