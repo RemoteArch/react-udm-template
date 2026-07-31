@@ -4,7 +4,7 @@ export const BASE_URL = isProd
     ? 'api/index.php'
     : 'api/index.php';
 
-const tokenkey = "hnk-shop-token";
+const tokenkey = "token";
 
 function joinUrl(base, path) {
   if (!base) return path;
@@ -121,4 +121,4 @@ export const get = (url, params = {}, headers = {}) => apiRequest(url, { method:
 export const post = (url, body = {}, params = {}, headers = {}) => apiRequest(url, { method: 'POST', body, params, headers });
 export const del = (url, params = {}, headers = {}) => apiRequest(url, { method: 'DELETE', params, headers });
 
-export default { get, post, del };
+export default { get, post, del , getApiBaseUrl };
