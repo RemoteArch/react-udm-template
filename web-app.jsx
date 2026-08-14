@@ -25,6 +25,29 @@ if (typeof ReactDOM === 'undefined') {
 let BASE_URL = '';
 let CACHE_MAPS = {};
 
+// ── Helper: compile (optional Babel) + blob import ──
+const compileAndImport = async (code, isJsx) => {
+  let finalCode = code;
+  if (isJsx) {
+    if (!window.Babel) {
+      await loadScript(BABEL_URL);
+    }
+    const result = Babel.transform(code, {
+      presets: ["react"],
+      sourceType: "module",
+    });
+    finalCode = result.code;
+  }
+  const blob = new Blob([finalCode], { type: "text/javascript" });
+  const blobUrl = URL.createObjectURL(blob);
+  try {
+    const module = await import(blobUrl);
+    return module;
+  } finally {
+    URL.revokeObjectURL(blobUrl);
+  }
+};
+
 const loadModule = async (url) => {
   if(BASE_URL && !url.startsWith('http://') && !url.startsWith('https://')){
     url = BASE_URL+url;
@@ -46,27 +69,7 @@ const loadModule = async (url) => {
     }
 
     const source = await response.text();
-
-    let code = source;
-    if (/\.jsx$/i.test(url)) {
-      if (!window.Babel) {
-        await loadScript(BABEL_URL);
-      }
-      const result = Babel.transform(source, {
-        presets: ["react"],
-        sourceType: "module",
-      });
-      code = result.code;
-    }
-
-    const blob = new Blob([code], { type: "text/javascript" });
-    const blobUrl = URL.createObjectURL(blob);
-    try {
-      const module = await import(blobUrl);
-      return module;
-    } finally {
-      URL.revokeObjectURL(blobUrl);
-    }
+    return compileAndImport(source, /\.jsx$/i.test(url));
   })();
   CACHE_MAPS[key] = { promise: loader };
   const module = await loader;
@@ -195,6 +198,30 @@ class WebAppElement extends HTMLElement {
 
   getProps() {
     return this._props;
+  }
+
+  // ── Render directly from JSX source code (bypasses url/base-url) ──
+  setCode(code , isjsx = true) {
+    if (!this._root) return;
+    const Comp = React.lazy(async () => {
+      try {
+        const mod = await compileAndImport(code, isjsx);
+        const C = mod?.default;
+        if (!C) throw new Error('Aucun export par défaut après chargement');
+        return { default: C };
+      } catch (error) {
+        console.error('setCode error:', error);
+        throw error;
+      }
+    });
+    const SuspenseWithError = () => (
+      <ErrorBoundary errorhtml={this._errorHtml}>
+        <React.Suspense fallback={<div dangerouslySetInnerHTML={{ __html: this._children }}></div>}>
+          <Comp {...this._props} />
+        </React.Suspense>
+      </ErrorBoundary>
+    );
+    this._root.render(<SuspenseWithError />);
   }
 
   lazyJsxEsm = (url) => {
