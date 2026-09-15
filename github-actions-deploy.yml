@@ -1,0 +1,44 @@
+name: Build & Deploy
+
+on:
+  push:
+    branches: [ '**' ]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # ===== Checkout =====
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ===== Setup Node =====
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        if: hashFiles('package.json') != ''
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # ===== Setup pnpm =====
+      - name: Setup pnpm
+        if: hashFiles('package.json') != ''
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      # ===== Install dependencies =====
+      - name: Install dependencies
+        if: hashFiles('package.json') != ''
+        run: pnpm install --frozen-lockfile
+
+      # ===== Build & Deploy =====
+      # deploy.mjs lit deploy.{branch}.yml ou deploy.config.yml
+      # Exécute les commandes build: puis déploie via deploy:
+      - name: Build & Deploy
+        run: |
+          node --check deploy.mjs
+          node deploy.mjs "${{ github.ref_name }}"
