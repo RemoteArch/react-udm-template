@@ -2,14 +2,17 @@ const { useState, useEffect, useCallback } = React;
 
 // ─── API LAYER ────────────────────────────────────────────────────────────────
 const API_URL   = "";
+const DB_TOKEN  = localStorage.getItem('db_token');
+if (!DB_TOKEN) window.location.hash = 'db-connect';
 
 async function api(method, params = {}, body = null) {
-  const url = new URL(API_URL, window.location.href);
+  const url = new URL(API_URL || window.location.pathname, window.location.origin);
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
 
   const opts = {
     method,
     headers: {
+      "TOKEN": DB_TOKEN,
       ...(body !== null ? { "Content-Type": "application/json" } : {}),
     },
     ...(body !== null ? { body: JSON.stringify(body) } : {}),
@@ -24,13 +27,11 @@ async function api(method, params = {}, body = null) {
 
 const API = {
   // Single API: POST / with raw SQL or array of SQL statements
-  execute: (sql) => {
+  execute: async (sql) => {
     // Check if sql is an array (multiple statements) or string (single statement)
-    if (Array.isArray(sql)) {
-      return api("POST",{}, sql);
-    } else {
-      return api("POST",{}, [sql]);
-    }
+    const isArray = Array.isArray(sql);
+    const res = await api("POST", {}, isArray ? sql : [sql]);
+    return isArray ? (Array.isArray(res) ? res : [res]) : res;
   },
 
   // Tables
@@ -58,15 +59,19 @@ const API = {
     }
   },
 
-  create: (table) => API.execute(`SHOW CREATE TABLE \`${table}\``).then(res => {
-    const row = (res.data || [])[0];
-    const createTable = row ? Object.values(row)[1] : null; // CREATE TABLE
-    // Ajouter IF NOT EXISTS si ce n'est pas déjà présent
-    if (createTable && !createTable.includes('IF NOT EXISTS')) {
-      return createTable.replace(/CREATE TABLE `/gi, 'CREATE TABLE IF NOT EXISTS `');
-    }
-    return createTable;
-  }),
+  createAll: (tables) => API.execute(tables.map(t => `SHOW CREATE TABLE \`${t}\``)).then(results =>
+    results.map(res => {
+      const row = (res.data || [])[0];
+      const createTable = row ? Object.values(row)[1] : null; // CREATE TABLE
+      // Ajouter IF NOT EXISTS si ce n'est pas déjà présent
+      if (createTable && !createTable.includes('IF NOT EXISTS')) {
+        return createTable.replace(/CREATE TABLE `/gi, 'CREATE TABLE IF NOT EXISTS `');
+      }
+      return createTable;
+    })
+  ),
+
+  create: (table) => API.createAll([table]).then(res => res[0]),
 
   // Rows
   rows: (table, p = {}) => {
@@ -82,12 +87,9 @@ const API = {
     // Count total
     const countSql = `SELECT COUNT(*) as total FROM \`${table}\``;
 
-    return Promise.all([
-      API.execute(sql).then(res => ({ rows: res.data || [] })),
-      API.execute(countSql).then(res => ({ total: (res.data || [])[0]?.total || 0 }))
-    ]).then(([data, count]) => ({
-      rows: data.rows,
-      total: count.total
+    return API.execute([sql, countSql]).then(([dataRes, countRes]) => ({
+      rows: dataRes.data || [],
+      total: (countRes.data || [])[0]?.total || 0
     }));
   },
 
@@ -1692,13 +1694,10 @@ function ExportDDLModal({ tables, onClose, toast }) {
     
     setLoading(true);
     try {
-      const ddlPromises = selectedTables.map(async (table) => {
-        const result = await API.create(table);
-        return `-- Table: ${table}\n${result};\n\n`;
-      });
-      
-      const ddlResults = await Promise.all(ddlPromises);
-      const fullDDL = ddlResults.join('');
+      const ddlResults = await API.createAll(selectedTables);
+      const fullDDL = ddlResults
+        .map((result, i) => `-- Table: ${selectedTables[i]}\n${result};\n\n`)
+        .join('');
       setDdl(fullDDL);
       setShowDDL(true);
     } catch (e) {
