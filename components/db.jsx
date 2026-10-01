@@ -2,17 +2,12 @@ const { useState, useEffect, useCallback } = React;
 
 // ─── API LAYER ────────────────────────────────────────────────────────────────
 const API_URL   = "";
-const DB_TOKEN  = new URLSearchParams(
-  window.location.hash.slice(1).split('?')[1] || ''
-).get('t');
-if (!DB_TOKEN) window.location.hash = 'db-connect';
 
-let DB_NAME = '';
-try {
-  const decoded = decodeURIComponent(escape(atob(DB_TOKEN)));
-  DB_NAME = (decoded.split('name||')[1] || '').split('|||')[0];
-} catch (e) {}
-document.title = DB_NAME ? `DB — ${DB_NAME}` : 'DB Manager';
+function getDbToken() {
+  return new URLSearchParams(
+    window.location.hash.slice(1).split('?')[1] || ''
+  ).get('t');
+}
 
 async function api(method, params = {}, body = null) {
   const url = new URL(API_URL || window.location.pathname, window.location.origin);
@@ -21,7 +16,7 @@ async function api(method, params = {}, body = null) {
   const opts = {
     method,
     headers: {
-      "TOKEN": DB_TOKEN,
+      "TOKEN": getDbToken(),
       ...(body !== null ? { "Content-Type": "application/json" } : {}),
     },
     ...(body !== null ? { body: JSON.stringify(body) } : {}),
@@ -1841,7 +1836,16 @@ export default function App() {
     finally { setLoadingList(false); }
   }, []);
 
-  useEffect(() => { loadTables(); }, [loadTables]);
+  useEffect(() => {
+    const token = getDbToken();
+    if (!token) { window.location.hash = 'db-connect'; return; }
+    try {
+      const decoded = decodeURIComponent(escape(atob(token)));
+      const name = (decoded.split('name||')[1] || '').split('|||')[0];
+      document.title = name ? `DB — ${name}` : 'DB Manager';
+    } catch (e) { document.title = 'DB Manager'; }
+    loadTables();
+  }, [loadTables]);
 
   function confirmDrop(table) {
     setConfirm({
