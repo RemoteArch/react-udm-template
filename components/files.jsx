@@ -40,6 +40,28 @@ const getFileIcon = (name, isDir) => {
   }
 };
 
+const MONACO_URL = 'https://cdn.pass.cm/components/monaco-editor.js';
+
+const MONACO_LANGS = {
+  js: 'javascript', jsx: 'javascript', mjs: 'javascript',
+  ts: 'typescript', tsx: 'typescript',
+  json: 'json', html: 'html', htm: 'html', css: 'css',
+  py: 'python', md: 'markdown', xml: 'xml', svg: 'xml',
+  sql: 'sql', sh: 'shell', bash: 'shell', yml: 'yaml', yaml: 'yaml',
+  php: 'php', java: 'java', c: 'c', h: 'c', cpp: 'cpp', hpp: 'cpp',
+  cs: 'csharp', go: 'go', rs: 'rust', rb: 'ruby', swift: 'swift',
+  kt: 'kotlin', lua: 'lua', pl: 'perl', r: 'r', dart: 'dart',
+  dockerfile: 'dockerfile', ini: 'ini', toml: 'ini', cfg: 'ini', conf: 'ini',
+  ps1: 'powershell', bat: 'bat', graphql: 'graphql',
+  vue: 'html', svelte: 'html', astro: 'html',
+  txt: 'plaintext', log: 'plaintext', csv: 'plaintext',
+};
+
+const getMonacoLanguage = (name) => {
+  const ext = (name || '').split('.').pop().toLowerCase();
+  return MONACO_LANGS[ext] || 'plaintext';
+};
+
 // ============================================================================
 // Helper Components
 // ============================================================================
@@ -177,6 +199,9 @@ const FileEditor = ({ path, content: initialContent, isNew, onSave, onClose }) =
   const [content, setContent] = useState(initialContent);
   const [fileName, setFileName] = useState(isNew ? '' : path.split('/').pop());
   const [isSaving, setIsSaving] = useState(false);
+  const [editorMode, setEditorMode] = useState('advanced');
+  const [MonacoComp, setMonacoComp] = useState(null);
+  const [monacoState, setMonacoState] = useState('loading');
 
   useEffect(() => {
     setContent(initialContent);
@@ -187,6 +212,25 @@ const FileEditor = ({ path, content: initialContent, isNew, onSave, onClose }) =
       setFileName(path.split('/').pop());
     }
   }, [isNew, path]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        if (typeof window.loadModule !== 'function') {
+          throw new Error('loadModule indisponible');
+        }
+        const mod = await window.loadModule(MONACO_URL);
+        if (cancelled) return;
+        setMonacoComp(() => mod?.default || null);
+        setMonacoState(mod?.default ? 'ready' : 'error');
+      } catch (e) {
+        console.error('Monaco indisponible:', e);
+        if (!cancelled) setMonacoState('error');
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -214,13 +258,56 @@ const FileEditor = ({ path, content: initialContent, isNew, onSave, onClose }) =
         </div>
       )}
       <div>
-        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">Contenu</label>
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          className="w-full h-96 bg-black border border-gray-800 rounded-lg px-4 py-3 text-sm font-mono focus:outline-none focus:border-blue-500 transition-colors resize-none"
-          spellCheck="false"
-        />
+        <div className="flex items-center justify-between mb-1.5">
+          <label className="block text-[10px] font-bold text-gray-500 uppercase">Contenu</label>
+          <div className="flex gap-1 p-0.5 bg-gray-800/60 border border-gray-800 rounded-lg">
+            <button
+              type="button"
+              onClick={() => setEditorMode('simple')}
+              className={`px-2.5 py-1 text-[10px] font-bold uppercase rounded-md transition-colors ${
+                editorMode === 'simple' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Simple
+            </button>
+            <button
+              type="button"
+              onClick={() => monacoState !== 'error' && setEditorMode('advanced')}
+              disabled={monacoState === 'error'}
+              className={`px-2.5 py-1 text-[10px] font-bold uppercase rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                editorMode === 'advanced' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              {monacoState === 'loading' ? 'Avancé…' : 'Avancé'}
+            </button>
+          </div>
+        </div>
+        {editorMode === 'advanced' && monacoState === 'ready' && MonacoComp ? (
+          <MonacoComp
+            value={content}
+            onChange={(v) => setContent(v ?? '')}
+            language={getMonacoLanguage(isNew ? fileName : path)}
+            theme="vs-dark"
+            height="384px"
+            className="rounded-lg overflow-hidden border border-gray-800"
+            options={{ fontSize: 13 }}
+          />
+        ) : (
+          <>
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="w-full h-96 bg-black border border-gray-800 rounded-lg px-4 py-3 text-sm font-mono focus:outline-none focus:border-blue-500 transition-colors resize-none"
+              spellCheck="false"
+            />
+            {editorMode === 'advanced' && monacoState === 'loading' && (
+              <p className="text-[10px] text-gray-500 mt-1">Chargement de l'éditeur avancé…</p>
+            )}
+            {monacoState === 'error' && (
+              <p className="text-[10px] text-amber-500 mt-1">Éditeur avancé indisponible — mode simple utilisé.</p>
+            )}
+          </>
+        )}
       </div>
       <div className="flex justify-end gap-3 mt-2">
         <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors">Annuler</button>

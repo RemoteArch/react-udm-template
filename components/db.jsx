@@ -2,8 +2,17 @@ const { useState, useEffect, useCallback } = React;
 
 // ─── API LAYER ────────────────────────────────────────────────────────────────
 const API_URL   = "";
-const DB_TOKEN  = localStorage.getItem('db_token');
+const DB_TOKEN  = new URLSearchParams(
+  window.location.hash.slice(1).split('?')[1] || ''
+).get('t');
 if (!DB_TOKEN) window.location.hash = 'db-connect';
+
+let DB_NAME = '';
+try {
+  const decoded = decodeURIComponent(escape(atob(DB_TOKEN)));
+  DB_NAME = (decoded.split('name||')[1] || '').split('|||')[0];
+} catch (e) {}
+document.title = DB_NAME ? `DB — ${DB_NAME}` : 'DB Manager';
 
 async function api(method, params = {}, body = null) {
   const url = new URL(API_URL || window.location.pathname, window.location.origin);

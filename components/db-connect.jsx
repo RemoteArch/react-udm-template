@@ -128,9 +128,10 @@ export default function Home() {
   const loginWithToken = (token) => {
     const cleanToken = token.trim();
 
-    localStorage.setItem('db_token', cleanToken);
-
-    window.location.href = window.location.pathname + '#db';
+    window.location.href =
+      window.location.pathname +
+      '#db?t=' +
+      encodeURIComponent(cleanToken);
   };
 
   const handleSubmit = (event) => {

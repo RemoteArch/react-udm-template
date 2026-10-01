@@ -11,7 +11,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const webApp = document.querySelector('web-app');
             function handleHashChange() {
-                const hash = window.location.hash.replace('#', '');
+                const hash = window.location.hash.replace('#', '').split('?')[0];
                 if (hash) {
                     webApp.setAttribute('url', `components/${hash}.jsx`);
                 }else{
